@@ -23,6 +23,14 @@ public class Fingerprint {
 		this.raw = raw;
 		this.value = value;
 	}
+	
+	public void genValue() {
+		
+		if (this.value == null) {
+			
+			this.value = new BigInteger(this.raw);
+		}
+	}
 
 	public int getId() {
 		return id;

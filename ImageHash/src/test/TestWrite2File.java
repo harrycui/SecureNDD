@@ -1,0 +1,44 @@
+package test;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import local.Document;
+import local.Image;
+import util.FileTool;
+import util.ImageHashTool;
+
+public class TestWrite2File {
+
+	
+	public static void main(String[] args) {
+		
+		List<Document> docs = new ArrayList<Document>();
+		
+		for (int i = 0; i < 1000; i++) {
+			
+			Document doc = new Image(i+1, null);
+			
+			doc.generate(64, ImageHashTool.HASH_FAKE);
+			
+			docs.add(doc);
+		}
+		
+		FileTool.writeFingerprint2File("/home/ubuntu/", "testout.txt", docs, false);
+		
+		Map<Integer, BigInteger> fingerprints = FileTool.readFingerprintFromFile("/home/ubuntu/", "testout.txt", false);
+		
+		for (int i = 0; i < fingerprints.size(); i++) {
+			
+			BigInteger bi = fingerprints.get(i+1);
+			
+			if (bi.longValue() > Long.MAX_VALUE || bi.longValue() < Long.MIN_VALUE) {
+				System.out.println((i+1) + "::" + bi);
+			}
+			
+			
+		}
+	}
+}

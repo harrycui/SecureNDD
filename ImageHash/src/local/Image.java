@@ -3,8 +3,8 @@ package local;
 import org.opencv.core.Mat;
 
 import util.AHash;
+import util.FakeHash;
 import util.ImageHashTool;
-import base.SysConstant;
 
 public class Image extends Document {
 
@@ -20,12 +20,15 @@ public class Image extends Document {
 		
 		ImageHashTool hashTool = null;
 		
-		if (type == SysConstant.HASH_TYPE_A) {
+		if (type == ImageHashTool.HASH_TYPE_A) {
 			
 			hashTool = new AHash();
-		} else if (type == SysConstant.HASH_TYPE_P) {
+		} else if (type == ImageHashTool.HASH_TYPE_P) {
 			
 			hashTool = new AHash();
+		} else if (type == ImageHashTool.HASH_FAKE) {
+			
+			hashTool = new FakeHash();
 		} else {
 			
 			System.err.println("ERROR: Please check the image hash type!");
@@ -38,7 +41,7 @@ public class Image extends Document {
 		
 		if (getFingerprint() != null) {
 			
-			System.out.println("ID: " + getId() + " generates fingerpritn successfully.");
+			System.out.println("ID: " + getId() + " >>> generates fingerprint successfully.");
 		}
 	}
 
