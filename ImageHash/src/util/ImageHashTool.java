@@ -13,5 +13,5 @@ public interface ImageHashTool {
 	public static final int HASH_TYPE_P = 2;
 	
 	
-	public Fingerprint genImageHash(Mat src, int length);
+	public Fingerprint genImageHash(Mat src, int id, int length);
 }

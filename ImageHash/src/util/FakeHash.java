@@ -16,7 +16,7 @@ public class FakeHash implements ImageHashTool {
 	}
 	
 	@Override
-	public Fingerprint genImageHash(Mat src, int length) {
+	public Fingerprint genImageHash(Mat src, int id, int length) {
 		
 		Fingerprint fingerprint = new Fingerprint();
 		
@@ -26,6 +26,8 @@ public class FakeHash implements ImageHashTool {
 			
 			rand.nextBytes(fakeData);
 		}
+		
+		fingerprint.setId(id);
 		
 		fingerprint.setRaw(fakeData);
 		

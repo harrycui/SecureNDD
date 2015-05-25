@@ -10,8 +10,8 @@ public class Image extends Document {
 
 	private Mat data;
 	
-	public Image(int id, Mat src) {
-		super(id);
+	public Image(int id, String name, Mat src) {
+		super(id, name);
 		this.data = src;
 	}
 
@@ -36,7 +36,7 @@ public class Image extends Document {
 		
 		if (hashTool != null) {
 			
-			setFingerprint(hashTool.genImageHash(this.data, length));
+			setFingerprint(hashTool.genImageHash(this.data, this.getId(), length));
 		}
 		
 		if (getFingerprint() != null) {

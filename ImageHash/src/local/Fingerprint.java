@@ -13,6 +13,14 @@ public class Fingerprint {
 	public Fingerprint() {
 		super();
 	}
+	
+	public Fingerprint(int id, String type, int length, byte[] raw) {
+		super();
+		this.id = id;
+		this.type = type;
+		this.length = length;
+		this.raw = raw;
+	}
 
 	public Fingerprint(int id, String type, int length, byte[] raw,
 			BigInteger value) {

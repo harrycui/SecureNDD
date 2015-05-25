@@ -4,18 +4,22 @@ public abstract class Document {
 
 	private int id;
 	
+	private String name;
+	
 	private Fingerprint fingerprint;
 	
 	public abstract void generate(int length, int type);
 	
-	public Document(int id) {
+	public Document(int id, String name) {
 		super();
 		this.id = id;
+		this.name = name;
 	}
 
-	public Document(int id, Fingerprint fingerprint) {
+	public Document(int id, String name, Fingerprint fingerprint) {
 		super();
 		this.id = id;
+		this.name = name;
 		this.fingerprint = fingerprint;
 	}
 
@@ -35,5 +39,13 @@ public abstract class Document {
 
 	public void setFingerprint(Fingerprint fingerprint) {
 		this.fingerprint = fingerprint;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 }
