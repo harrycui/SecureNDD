@@ -36,7 +36,7 @@ public class Fingerprint {
 		
 		if (this.value == null) {
 			
-			this.value = new BigInteger(this.raw);
+			this.value = new BigInteger(1, this.raw);
 		}
 	}
 

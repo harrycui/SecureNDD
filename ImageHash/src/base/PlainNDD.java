@@ -19,7 +19,7 @@ public class PlainNDD {
 		
 		for (NameFingerprintPair item : dataset) {
 			
-			if (Distance.getHammingDistance(biQ, item.getValue()) <= epsilon) {
+			if (Distance.getHammingDistanceV2(biQ, item.getValue()) <= epsilon) {
 				results.add(item);
 			}
 		}

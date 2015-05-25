@@ -123,8 +123,14 @@ public class TestOnPlaintext {
                         continue;
                     }
 
+                    long time1 = System.nanoTime();
+                    
                     Set<NameFingerprintPair> searchResult = PlainNDD.searchOnPlaintext(fingerprints.get(queryIndex-1).getValue(), fingerprints, 8);
 
+                    long time2 = System.nanoTime();
+                    
+                    System.out.println("Cost " + (time2 - time1) + " ns.");
+                    
                     if (searchResult != null && !searchResult.isEmpty()) {
 						
                     	PrintTool.println(PrintTool.OUT, "there are " + searchResult.size() + " near-duplicates: \n");

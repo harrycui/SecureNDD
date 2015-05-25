@@ -20,85 +20,56 @@ public class Distance {
 		return counter;
 	}
 
-	public static int getHammingDistance(BigInteger v1, BigInteger v2) {
+	public static int getHammingDistanceV1(BigInteger v1, BigInteger v2) {
 
 		int dist = 0;
-		String ZERO = "00000000";
-		byte[] data1 = v1.toByteArray();
-		byte[] data2 = v2.toByteArray();
 		
-		/*BigInteger x = v1.xor(v2);
-		byte[] datax = x.toByteArray();
-		
-		StringBuffer sbx = new StringBuffer();
+		String sv1 = bigInteger2String(v1, 9);
+		String sv2 = bigInteger2String(v2, 9);
 
-		for (int i = 0; i < datax.length; i++) {
-			String s = Integer.toBinaryString(datax[i]);
-			if (s.length() > 8) {
-				s = s.substring(s.length() - 8);
-			} else if (s.length() < 8) {
-				s = ZERO.substring(s.length()) + s;
-			}
-			// System.out.println(s);
-			sbx.append(s);
-		}*/
+		/*System.out.println(sv1.length() + " : " + sv1.toString());
+		System.out.println(sv2.length() + " : " + sv2.toString());*/
 
-		StringBuffer sb1 = new StringBuffer();
-		
-		if (data1.length < 8) {
-			int paddingNum = 8 - data1.length;
-			
-			for (int i = 0; i < paddingNum; i++) {
-				sb1.append(ZERO);
-			}
-		}
+		dist = getHammingDistance(sv1, sv2);
 
-		for (int i = 0; i < data1.length; i++) {
-			String s = Integer.toBinaryString(data1[i]);
-			if (s.length() > 8) {
-				s = s.substring(s.length() - 8);
-			} else if (s.length() < 8) {
-				s = ZERO.substring(s.length()) + s;
-			}
-			// System.out.println(s);
-			sb1.append(s);
-		}
-
-		StringBuffer sb2 = new StringBuffer();
-		
-		if (data2.length < 8) {
-			int paddingNum = 8 - data2.length;
-			
-			for (int i = 0; i < paddingNum; i++) {
-				sb2.append(ZERO);
-			}
-		}
-
-		for (int i = 0; i < data2.length; i++) {
-			String s = Integer.toBinaryString(data2[i]);
-			if (s.length() > 8) {
-				s = s.substring(s.length() - 8);
-			} else if (s.length() < 8) {
-				s = ZERO.substring(s.length()) + s;
-			}
-			// System.out.println(s);
-			sb2.append(s);
-		}
-
-		System.out.println(sb1.toString().length() + " : " + sb1.toString());
-		System.out.println(sb2.toString().length() + " : " + sb2.toString());
-		//System.out.println(sbx.toString().length() + " : " + sbx.toString());
-		
-		dist = getHammingDistance(sb1.toString(), sb2.toString());
-		
-		System.out.println(dist);
-		/*
-		 * BigInteger x = v1.xor(v2);
-		 * 
-		 * while (x.signum() != 0) { dist += 1; x = x.and(x.subtract(new
-		 * BigInteger("1"))); }
-		 */
+		//System.out.println(dist);
 
 		return dist;
+	}
+
+	public static int getHammingDistanceV2(BigInteger v1, BigInteger v2) {
+
+		int dist = v1.xor(v2).bitCount();
+
+		return dist;
+	}
+
+	public static String bigInteger2String(BigInteger bi, int length) {
+
+		String ZERO = "00000000";
+		byte[] data = bi.toByteArray();
+
+		StringBuffer sb = new StringBuffer();
+
+		if (data.length < length) {
+			int paddingNum = length - data.length;
+
+			for (int i = 0; i < paddingNum; i++) {
+				sb.append(ZERO);
+			}
+		}
+
+		for (int i = 0; i < data.length; i++) {
+			String s = Integer.toBinaryString(data[i]);
+			if (s.length() > 8) {
+				s = s.substring(s.length() - 8);
+			} else if (s.length() < 8) {
+				s = ZERO.substring(s.length()) + s;
+			}
+
+			sb.append(s);
+		}
+
+		return sb.toString();
 	}
 }
