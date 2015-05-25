@@ -2,6 +2,8 @@ package base;
 
 import java.math.BigInteger;
 
+import util.Converter;
+
 public class Distance {
 
 	public static int getHammingDistance(String v1, String v2) {
@@ -24,8 +26,8 @@ public class Distance {
 
 		int dist = 0;
 		
-		String sv1 = bigInteger2String(v1, 9);
-		String sv2 = bigInteger2String(v2, 9);
+		String sv1 = Converter.bigInteger2String(v1, 9);
+		String sv2 = Converter.bigInteger2String(v2, 9);
 
 		/*System.out.println(sv1.length() + " : " + sv1.toString());
 		System.out.println(sv2.length() + " : " + sv2.toString());*/
@@ -42,34 +44,5 @@ public class Distance {
 		int dist = v1.xor(v2).bitCount();
 
 		return dist;
-	}
-
-	public static String bigInteger2String(BigInteger bi, int length) {
-
-		String ZERO = "00000000";
-		byte[] data = bi.toByteArray();
-
-		StringBuffer sb = new StringBuffer();
-
-		if (data.length < length) {
-			int paddingNum = length - data.length;
-
-			for (int i = 0; i < paddingNum; i++) {
-				sb.append(ZERO);
-			}
-		}
-
-		for (int i = 0; i < data.length; i++) {
-			String s = Integer.toBinaryString(data[i]);
-			if (s.length() > 8) {
-				s = s.substring(s.length() - 8);
-			} else if (s.length() < 8) {
-				s = ZERO.substring(s.length()) + s;
-			}
-
-			sb.append(s);
-		}
-
-		return sb.toString();
 	}
 }

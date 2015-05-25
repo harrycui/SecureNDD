@@ -272,4 +272,54 @@ public class FileTool {
 
 		return results;
 	}
+
+	public static List<String> readLinesFromFile(String inPath, String fileName) {
+
+		List<String> results = new ArrayList<String>();
+
+		InputStreamReader reader = null;
+		BufferedReader br = null;
+
+		try {
+
+			reader = new InputStreamReader(new FileInputStream(inPath
+					+ fileName));
+
+			br = new BufferedReader(reader);
+
+			int numOfItem = 0;
+
+			String line = br.readLine();
+
+			while (line != null) {
+				results.add(line.replace("\n", ""));
+
+				line = br.readLine();
+			}
+
+			PrintTool.println(PrintTool.OUT, "Successfully read " + numOfItem
+					+ " lines from " + inPath + fileName);
+
+		} catch (IOException e) {
+
+			e.printStackTrace();
+
+		} finally {
+			try {
+
+				if (reader != null) {
+					reader.close();
+				}
+
+				if (br != null) {
+					br.close();
+				}
+
+			} catch (final IOException e) {
+				PrintTool.println(PrintTool.ERROR, "fail to read the file!");
+			}
+		}
+
+		return results;
+	}
 }
