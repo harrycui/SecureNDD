@@ -1,0 +1,4 @@
+inputPath: /data/copydays_original/
+outputPath: /home/ubuntu/infocom2016/
+outFileName: fingerprint.txt
+limitNum: 200

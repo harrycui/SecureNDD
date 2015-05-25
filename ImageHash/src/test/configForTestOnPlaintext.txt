@@ -1,0 +1,3 @@
+inputPath: /home/ubuntu/infocom2016/
+inputFileName: fingerprint.txt
+limitNum: 200
