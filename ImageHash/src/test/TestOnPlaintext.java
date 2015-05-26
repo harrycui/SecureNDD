@@ -34,7 +34,7 @@ public class TestOnPlaintext {
 		String inputFileName = config.getString("inputFileName");
 		//String outputPath = config.getString("outputPath");
 		//String outFileName = config.getString("outFileName");
-		int limitNum = config.getInt("limitNum");
+		int numOfLimit = config.getInt("numOfLimit");
 		
 		List<NameFingerprintPair> fingerprints = FileTool
 				.readFingerprintFromFile2List(inputPath, inputFileName, false);

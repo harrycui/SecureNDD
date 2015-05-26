@@ -225,13 +225,9 @@ public class FileTool {
 
 				br = new BufferedReader(reader);
 
-				int numOfItem = 0;
-
 				String line = br.readLine();
 
 				while (line != null) {
-
-					++numOfItem;
 
 					StringTokenizer st = new StringTokenizer(line.replace("\n",
 							""), "::");
@@ -246,7 +242,7 @@ public class FileTool {
 				}
 
 				PrintTool.println(PrintTool.OUT, "Successfully read "
-						+ numOfItem + " items from " + inPath + fileName);
+						+ results.size() + " items from " + inPath + fileName);
 
 			} catch (IOException e) {
 
@@ -287,8 +283,6 @@ public class FileTool {
 
 			br = new BufferedReader(reader);
 
-			int numOfItem = 0;
-
 			String line = br.readLine();
 
 			while (line != null) {
@@ -297,7 +291,7 @@ public class FileTool {
 				line = br.readLine();
 			}
 
-			PrintTool.println(PrintTool.OUT, "Successfully read " + numOfItem
+			PrintTool.println(PrintTool.OUT, "Successfully read " + results.size()
 					+ " lines from " + inPath + fileName);
 
 		} catch (IOException e) {

@@ -7,14 +7,21 @@ import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import cloud.Repository;
 import local.NameFingerprintPair;
 import util.ConfigParser;
 import util.FileTool;
+import util.PRF;
 import util.PrintTool;
+import base.Parameters;
 import base.PlainNDD;
 import base.SysConstant;
 
@@ -36,39 +43,59 @@ public class TestPhase1And2 {
 		String inputFileName = config.getString("inputFileName");
 		// String outputPath = config.getString("outputPath");
 		// String outFileName = config.getString("outFileName");
-		int limitNum = config.getInt("limitNum");
+		int numOfLimit = config.getInt("numOfLimit");
 		int numOfRepo = config.getInt("numOfRepo");
+		String pairingSettingPath = config.getString("pairingSettingPath");
+		int lshL = config.getInt("lshL");
 		
 		
-		// Step 2: preprocess: setup keys and read file
-		Pairing pairing = PairingFactory.getPairing("./ImageHash/src/test/d159.properties");
+		// Step 1: preprocess: setup keys and read file
+		Parameters params = new Parameters(pairingSettingPath, lshL);
 		
-		// constant element of H1, H2 function
-		Element h1 = pairing.getG1().newRandomElement().getImmutable();
+		System.out.println(">>> System parameters have been initialized");
+		System.out.println(">>> Now, reading the raw test data from " + inputPath + inputFileName);
 		
-		Element h2 = pairing.getG2().newRandomElement().getImmutable();
-
-		// constant element g for system
-		Element g1 = pairing.getG1().newRandomElement().getImmutable();
+		// keyV0 is the key for the detector
+		Element keyV0 = params.pairing.getZr().newRandomElement().getImmutable();
 		
-		Element g2 = pairing.getG2().newRandomElement().getImmutable();
-
-		Element Z = pairing.pairing(g1, g2).getImmutable();
-		
-		Element[] keyVs = new Element[numOfRepo];
-		
-		for (int i = 0; i < keyVs.length; i++) {
-			
-			keyVs[i] = pairing.getZr().newRandomElement().getImmutable();
-		}
-		
-		// key for the detector
-		Element keyV0 = pairing.getZr().newRandomElement().getImmutable();
-		
+		// TODO: read each line at the time of inserting
 		// read file to lines list
 		List<String> strRecords = FileTool.readLinesFromFile(inputPath, inputFileName);
+		
+		
+		if (numOfLimit > strRecords.size()) {
+			numOfLimit = strRecords.size();
+		}
+		
 
-		// Step 2: 
+		// Step 2: initialize the repositories and secure insert records
+		System.out.println(">>> There are " + numOfLimit + " records.");
+		System.out.println(">>> Now, initializing " + numOfRepo + " repositories.");
+		
+		List<Repository> repos = new ArrayList<Repository>(numOfRepo);
+		
+		for (int i = 0; i < numOfRepo; i++) {
+			
+			Repository repo = new Repository(i, params);
+			
+			Element delta = params.g2.powZn(repo.getKeyV().div(keyV0));
+					
+			// id = 0 is the detector
+			repo.addDelta(0, delta);
+			
+			repos.add(repo);
+		}
+		
+		System.out.println(">>> Now, start inserting data into repositories...");
+		
+		//int avgSize = numOfLimit/numOfRepo;
+		
+		for (int i = 0; i < numOfLimit; i++) {
+			
+			//int repoId = i % avgSize;
+			
+			repos.get(0).insert(strRecords.get(i));
+		}
 
 		// %%%%%%%%%%%%%%%%%% test %%%%%%%%%%%%%%%%%%%
 
@@ -169,37 +196,61 @@ public class TestPhase1And2 {
 						continue;
 					}
 
-					long time1 = System.nanoTime();
+					// prepare the query message
+					List<Element> Q = new ArrayList<Element>(lshL);
+					
+					// TODO: check the query data index in corresponding repo
+					long[] lsh = new long[params.lshL];
+					for (int i = 0; i < lsh.length; i++) {
+						lsh[i] = PRF.HMACSHA1ToUnsignedInt(repos.get(0).getRawRecord().get(queryIndex).getValue().toString(), String.valueOf(i));
+					}
+					
+					for (int i = 0; i < lshL; i++) {
+						
+						Element t = params.h1.pow(BigInteger.valueOf(lsh[i])).powZn(keyV0);
+						
+						Q.add(t);
+					}
+					
+					
+					long time1 = System.currentTimeMillis();
+					
+					List<List<Integer>> results = new ArrayList<List<Integer>>(numOfRepo);
+					
+					int numOfNDD = 0;
+					
+					for (int i = 0; i < numOfRepo; i++) {
+						
+						List<Integer> resultOfRepo = repos.get(i).secureSearch(0, Q);
+						
+						numOfNDD += resultOfRepo.size();
+						
+						results.add(resultOfRepo);
+					}
 
-					/*Set<NameFingerprintPair> searchResult = PlainNDD
-							.searchOnPlaintext(fingerprints.get(queryIndex - 1)
-									.getValue(), fingerprints, 8);*/
+					long time2 = System.currentTimeMillis();
 
-					long time2 = System.nanoTime();
+					System.out.println("Cost " + (time2 - time1) + " ms.");
 
-					System.out.println("Cost " + (time2 - time1) + " ns.");
-
-					/*if (searchResult != null && !searchResult.isEmpty()) {
+					if (results != null && !results.isEmpty() && numOfNDD > 0) {
 
 						PrintTool.println(PrintTool.OUT, "there are "
-								+ searchResult.size() + " near-duplicates: \n");
-
-						// create an iterator
-						Iterator<NameFingerprintPair> iterator = searchResult
-								.iterator();
-
-						int num = 1;
-						// check values
-						while (iterator.hasNext()) {
-
-							NameFingerprintPair temp = iterator.next();
-
-							System.out
-									.println((num++) + " : " + temp.getName());
+								+ numOfNDD + " near-duplicates: \n");
+						
+						for (int i = 0; i < repos.size(); i++) {
+							
+							for (int j = 0; j < results.get(i).size(); j++) {
+								
+								int id = results.get(i).get(j);
+								
+								NameFingerprintPair item = repos.get(i).getRawRecord().get(id);
+								
+								System.out.println(id + " :: " + item.getName());
+							}
 						}
 					} else {
 						System.out.println("No similar item!!!");
-					}*/
+					}
 				}
 			}
 
