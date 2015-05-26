@@ -70,6 +70,8 @@ public class Converter {
 
     public static long bytesToUnsignedInt(byte[] bytes) {
 
+    	ByteBuffer buffer = ByteBuffer.allocate(8);
+    	
         buffer.clear();
         buffer.put(bytes, 0, 4);
         buffer.flip();

@@ -232,7 +232,8 @@ public class FileTool {
 					StringTokenizer st = new StringTokenizer(line.replace("\n",
 							""), "::");
 
-					int id = Integer.valueOf(st.nextToken());
+					//int id = Integer.valueOf(st.nextToken());
+					st.nextToken();
 					String name = st.nextToken();
 					BigInteger value = new BigInteger(st.nextToken());
 

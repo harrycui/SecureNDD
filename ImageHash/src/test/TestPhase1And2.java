@@ -15,7 +15,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import cloud.InsertThread;
+import cloud.MyCountDown;
 import cloud.Repository;
+import cloud.SearchThread;
 import local.NameFingerprintPair;
 import util.ConfigParser;
 import util.FileTool;
@@ -88,14 +91,45 @@ public class TestPhase1And2 {
 		
 		System.out.println(">>> Now, start inserting data into repositories...");
 		
-		//int avgSize = numOfLimit/numOfRepo;
 		
-		for (int i = 0; i < numOfLimit; i++) {
-			
-			//int repoId = i % avgSize;
+		
+		/*for (int i = 0; i < numOfLimit; i++) {
 			
 			repos.get(0).insert(strRecords.get(i));
-		}
+		}*/
+		
+		long stOfInsert = System.currentTimeMillis();
+		
+		//multiple threads
+        MyCountDown threadCounter = new MyCountDown(numOfRepo);
+
+        for (int i = 0; i < numOfRepo; i++) {
+
+            InsertThread t = null;
+
+            if (i == numOfRepo - 1) {
+
+                List<String> partStrRecords = strRecords.subList(numOfLimit / numOfRepo * i, numOfLimit);
+
+                t = new InsertThread("Thread " + i, threadCounter, repos.get(i), partStrRecords);
+            } else {
+
+            	List<String> partStrRecords = strRecords.subList(numOfLimit / numOfRepo * i, numOfLimit / numOfRepo * (i + 1));
+                t = new InsertThread("Thread " + i, threadCounter, repos.get(i), partStrRecords);
+            }
+
+            t.start();
+        }
+
+        // wait for all threads done
+        while (true) {
+            if (!threadCounter.hasNext())
+                break;
+        }
+        
+        long etOfInsert = System.currentTimeMillis();
+        
+        System.out.println("Insert time: " + (etOfInsert - stOfInsert) + " ms.");
 
 		// %%%%%%%%%%%%%%%%%% test %%%%%%%%%%%%%%%%%%%
 
@@ -217,15 +251,35 @@ public class TestPhase1And2 {
 					
 					List<List<Integer>> results = new ArrayList<List<Integer>>(numOfRepo);
 					
+					for (int i = 0; i < numOfRepo; i++) {
+						results.add(new ArrayList<Integer>());
+					}
+					
 					int numOfNDD = 0;
+					
+					//multiple threads
+			        MyCountDown threadCounter2 = new MyCountDown(numOfRepo);
+
+			        for (int i = 0; i < numOfRepo; i++) {
+			        	
+			        	SearchThread t = new SearchThread("Thread " + i, threadCounter2, repos.get(i), 0, Q, results.get(i));
+
+			            t.start();
+			        }
+
+			        // wait for all threads done
+			        while (true) {
+			            if (!threadCounter2.hasNext())
+			                break;
+			        }
 					
 					for (int i = 0; i < numOfRepo; i++) {
 						
-						List<Integer> resultOfRepo = repos.get(i).secureSearch(0, Q);
+						//List<Integer> resultOfRepo = repos.get(i).secureSearch(0, Q);
 						
-						numOfNDD += resultOfRepo.size();
+						numOfNDD += results.get(i).size();
 						
-						results.add(resultOfRepo);
+						//results.add(resultOfRepo);
 					}
 
 					long time2 = System.currentTimeMillis();

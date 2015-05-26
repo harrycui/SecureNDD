@@ -3,4 +3,4 @@ inputFileName: fingerprint.txt
 numOfLimit: 10
 numOfRepo: 4
 pairingSettingPath: /home/ubuntu/github/SecureNDD/ImageHash/src/test/d159.properties
-lshL: 5
+lshL: 200
