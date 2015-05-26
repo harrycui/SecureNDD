@@ -23,7 +23,7 @@ public class Repository {
 	
 	private Map<Integer, Element> deltas;
 	
-	private Map<Integer, NameFingerprintPair> rawRecord;
+	//private Map<Integer, NameFingerprintPair> rawRecord;
 	
 	private Parameters params;
 	
@@ -40,7 +40,7 @@ public class Repository {
 		
 		this.secureRecords = new ArrayList<SecureRecord>();
 		this.deltas = new HashMap<Integer, Element>();
-		this.rawRecord = new HashMap<Integer, NameFingerprintPair>();
+		//this.rawRecord = new HashMap<Integer, NameFingerprintPair>();
 	}
 	
 	/**
@@ -61,28 +61,19 @@ public class Repository {
 	/**
 	 * Read data record as a String
 	 * 
-	 * @param strRecord [id]::[name]::[fingerprint]
+	 * @param value
 	 */
-	public void insert(String strRecord) {
+	public void insert(RawRecord rawRecord) {
 		
-		// Step 1: convert the string into id + name + fingerprint
 		
-		StringTokenizer st = new StringTokenizer(strRecord.replace("\n", ""), "::");
-
-		int id = Integer.valueOf(st.nextToken());
-		String name = st.nextToken();
-		BigInteger value = new BigInteger(st.nextToken());
-		
-		this.rawRecord.put(id, new NameFingerprintPair(name, value));
-		
-		// Step 2: compute LSH vector
+		// Step 1: compute LSH vector
 		// TODO: implement the LSH functions: input-BigInteger output-long[]
 		long[] lsh = new long[params.lshL];
 		for (int i = 0; i < lsh.length; i++) {
-			lsh[i] = PRF.HMACSHA1ToUnsignedInt(value.toString(), String.valueOf(i));
+			lsh[i] = PRF.HMACSHA1ToUnsignedInt(rawRecord.getValue().toString(), String.valueOf(i));
 		}
 		
-		// Step 3: encrypt the LSH vector
+		// Step 2: encrypt the LSH vector
 		
 		List<SecureToken> secureTokens = new ArrayList<SecureToken>(params.lshL);
 		
@@ -107,24 +98,24 @@ public class Repository {
 			secureTokens.add(seT);
 		}
 		
-		SecureRecord record = new SecureRecord(id, secureTokens);
+		SecureRecord record = new SecureRecord(rawRecord.getId(), secureTokens);
 		
 		this.secureRecords.add(record);
 	}
 	
 	
-	public List<Integer> secureSearch(int id, List<Element> query) {
+	public List<Integer> secureSearch(int uid, List<Element> query) {
 		
 		List<Integer> results = new ArrayList<Integer>();
 		
-		if (!this.deltas.containsKey(id)) {
+		if (!this.deltas.containsKey(uid)) {
 			
 			System.out.println("This user has not been authorized in repository (id = " + this.id + ")!");
 			
 			return null;
 		} else {
 			
-			Element delta = this.deltas.get(id);
+			Element delta = this.deltas.get(uid);
 			
 			// linear scan the secure tokens in repo
 			for (int i = 0; i < this.secureRecords.size(); i++) {
@@ -196,13 +187,5 @@ public class Repository {
 
 	public void setDeltas(Map<Integer, Element> deltas) {
 		this.deltas = deltas;
-	}
-
-	public Map<Integer, NameFingerprintPair> getRawRecord() {
-		return rawRecord;
-	}
-
-	public void setRawRecord(Map<Integer, NameFingerprintPair> rawRecord) {
-		this.rawRecord = rawRecord;
 	}
 }

@@ -8,25 +8,25 @@ public class InsertThread extends Thread {
 
 	private Repository repo;
 
-	private List<String> strData;
+	private List<RawRecord> rawRecords;
 
 	public InsertThread(String threadName, MyCountDown threadCounter,
-			Repository repo, List<String> strData) {
+			Repository repo, List<RawRecord> rawRecords) {
 
 		super(threadName);
 
 		this.threadCounter = threadCounter;
 		this.repo = repo;
-		this.strData = strData;
+		this.rawRecords = rawRecords;
 	}
 
 	public void run() {
 
 		System.out.println(getName() + " is running!");
 		
-		for (int i = 0; i < strData.size(); i++) {
+		for (int i = 0; i < rawRecords.size(); i++) {
 
-			this.repo.insert(strData.get(i));
+			this.repo.insert(rawRecords.get(i));
 		}
 
 		System.out.println(getName() + " is finished!");

@@ -1,6 +1,6 @@
 inputPath: /home/ubuntu/infocom2016/
 inputFileName: fingerprint.txt
-numOfLimit: 10
+numOfLimit: 200
 numOfRepo: 4
 pairingSettingPath: /home/ubuntu/github/SecureNDD/ImageHash/src/test/d159.properties
-lshL: 200
+lshL: 5

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import cloud.RawRecord;
 import local.Document;
 import local.NameFingerprintPair;
 
@@ -238,6 +239,142 @@ public class FileTool {
 					BigInteger value = new BigInteger(st.nextToken());
 
 					results.add(new NameFingerprintPair(name, value));
+
+					line = br.readLine();
+				}
+
+				PrintTool.println(PrintTool.OUT, "Successfully read "
+						+ results.size() + " items from " + inPath + fileName);
+
+			} catch (IOException e) {
+
+				e.printStackTrace();
+
+			} finally {
+				try {
+
+					if (reader != null) {
+						reader.close();
+					}
+
+					if (br != null) {
+						br.close();
+					}
+
+				} catch (final IOException e) {
+					PrintTool
+							.println(PrintTool.ERROR, "fail to read the file!");
+				}
+			}
+		}
+
+		return results;
+	}
+	
+	public static List<RawRecord> readFingerprintFromFile2ListV2(
+			String inPath, String fileName, int numOfLimit, boolean type) {
+
+		List<RawRecord> results = new ArrayList<RawRecord>();
+
+		// TODO: read from binary case
+		if (type) {
+
+		} else {
+
+			InputStreamReader reader = null;
+			BufferedReader br = null;
+
+			try {
+
+				reader = new InputStreamReader(new FileInputStream(inPath
+						+ fileName));
+
+				br = new BufferedReader(reader);
+
+				int numOfLine = 0;
+				
+				String line = br.readLine();
+
+				while (line != null) {
+
+					numOfLine++;
+					
+					if (numOfLimit < numOfLine) {
+						break;
+					}
+					
+					StringTokenizer st = new StringTokenizer(line.replace("\n",
+							""), "::");
+
+					int id = Integer.valueOf(st.nextToken());
+					String name = st.nextToken();
+					BigInteger value = new BigInteger(st.nextToken());
+
+					results.add(new RawRecord(id, name, value));
+
+					line = br.readLine();
+				}
+
+				PrintTool.println(PrintTool.OUT, "Successfully read "
+						+ results.size() + " items from " + inPath + fileName);
+
+			} catch (IOException e) {
+
+				e.printStackTrace();
+
+			} finally {
+				try {
+
+					if (reader != null) {
+						reader.close();
+					}
+
+					if (br != null) {
+						br.close();
+					}
+
+				} catch (final IOException e) {
+					PrintTool
+							.println(PrintTool.ERROR, "fail to read the file!");
+				}
+			}
+		}
+
+		return results;
+	}
+	
+	public static Map<Integer, NameFingerprintPair> readFingerprintFromFile2Map(
+			String inPath, String fileName, boolean type) {
+
+		Map<Integer, NameFingerprintPair> results = new HashMap<Integer, NameFingerprintPair>();
+
+		// TODO: read from binary case
+		if (type) {
+
+		} else {
+
+			InputStreamReader reader = null;
+			BufferedReader br = null;
+
+			try {
+
+				reader = new InputStreamReader(new FileInputStream(inPath
+						+ fileName));
+
+				br = new BufferedReader(reader);
+
+				String line = br.readLine();
+
+				while (line != null) {
+
+					StringTokenizer st = new StringTokenizer(line.replace("\n",
+							""), "::");
+
+					int id = Integer.valueOf(st.nextToken());
+					String name = st.nextToken();
+					BigInteger value = new BigInteger(st.nextToken());
+
+					results.put(id, new NameFingerprintPair(name, value));
 
 					line = br.readLine();
 				}

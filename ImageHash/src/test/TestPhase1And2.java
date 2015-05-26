@@ -1,32 +1,25 @@
 package test;
 
 import it.unisa.dia.gas.jpbc.Element;
-import it.unisa.dia.gas.jpbc.Pairing;
-import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import cloud.InsertThread;
-import cloud.MyCountDown;
-import cloud.Repository;
-import cloud.SearchThread;
-import local.NameFingerprintPair;
 import util.ConfigParser;
 import util.FileTool;
 import util.PRF;
 import util.PrintTool;
 import base.Parameters;
-import base.PlainNDD;
 import base.SysConstant;
+import cloud.InsertThread;
+import cloud.MyCountDown;
+import cloud.RawRecord;
+import cloud.Repository;
+import cloud.SearchThread;
 
 public class TestPhase1And2 {
 
@@ -63,11 +56,11 @@ public class TestPhase1And2 {
 		
 		// TODO: read each line at the time of inserting
 		// read file to lines list
-		List<String> strRecords = FileTool.readLinesFromFile(inputPath, inputFileName);
+		List<RawRecord> rawRecords = FileTool.readFingerprintFromFile2ListV2(inputPath, inputFileName, numOfLimit, false);
 		
 		
-		if (numOfLimit > strRecords.size()) {
-			numOfLimit = strRecords.size();
+		if (numOfLimit > rawRecords.size()) {
+			numOfLimit = rawRecords.size();
 		}
 		
 
@@ -109,12 +102,12 @@ public class TestPhase1And2 {
 
             if (i == numOfRepo - 1) {
 
-                List<String> partStrRecords = strRecords.subList(numOfLimit / numOfRepo * i, numOfLimit);
+                List<RawRecord> partStrRecords = rawRecords.subList(numOfLimit / numOfRepo * i, numOfLimit);
 
                 t = new InsertThread("Thread " + i, threadCounter, repos.get(i), partStrRecords);
             } else {
 
-            	List<String> partStrRecords = strRecords.subList(numOfLimit / numOfRepo * i, numOfLimit / numOfRepo * (i + 1));
+            	List<RawRecord> partStrRecords = rawRecords.subList(numOfLimit / numOfRepo * i, numOfLimit / numOfRepo * (i + 1));
                 t = new InsertThread("Thread " + i, threadCounter, repos.get(i), partStrRecords);
             }
 
@@ -133,7 +126,7 @@ public class TestPhase1And2 {
 
 		// %%%%%%%%%%%%%%%%%% test %%%%%%%%%%%%%%%%%%%
 
-		if (strRecords == null || strRecords.isEmpty()) {
+		if (rawRecords == null || rawRecords.isEmpty()) {
 
 			PrintTool.println(PrintTool.ERROR,
 					"reading failed, please check the input file!");
@@ -192,12 +185,13 @@ public class TestPhase1And2 {
 				while (true) {
 					System.out
 							.println("Now, you can search by input you query id range from [1, "
-									+ strRecords.size()
+									+ rawRecords.size()
 									+ "]: (-1 means return to root menu)");
 
 					String queryStr = null;
 					int queryIndex;
-
+					RawRecord rawQuery;
+					
 					try {
 						queryStr = br.readLine();
 					} catch (IOException e) {
@@ -210,7 +204,7 @@ public class TestPhase1And2 {
 							System.out.println("Return to root menu!");
 
 							break;
-						} else if (Integer.parseInt(queryStr) > strRecords
+						} else if (Integer.parseInt(queryStr) > rawRecords
 								.size() || Integer.parseInt(queryStr) <= 0) {
 
 							System.out
@@ -219,24 +213,26 @@ public class TestPhase1And2 {
 							continue;
 						} else {
 							queryIndex = Integer.parseInt(queryStr);
+							
+							rawQuery = rawRecords.get(queryIndex-1);
 
 							System.out.println("For query item id : "
-									+ queryIndex);
+									+ rawQuery.getId() + ", name : " + rawQuery.getName());
 						}
 					} catch (NumberFormatException e) {
 						System.out
 								.println("Warning: query index should be limited in [1, "
-										+ strRecords.size() + "]");
+										+ rawRecords.size() + "]");
 						continue;
 					}
 
 					// prepare the query message
 					List<Element> Q = new ArrayList<Element>(lshL);
 					
-					// TODO: check the query data index in corresponding repo
+
 					long[] lsh = new long[params.lshL];
 					for (int i = 0; i < lsh.length; i++) {
-						lsh[i] = PRF.HMACSHA1ToUnsignedInt(repos.get(0).getRawRecord().get(queryIndex).getValue().toString(), String.valueOf(i));
+						lsh[i] = PRF.HMACSHA1ToUnsignedInt(rawQuery.getValue().toString(), String.valueOf(i));
 					}
 					
 					for (int i = 0; i < lshL; i++) {
@@ -297,9 +293,10 @@ public class TestPhase1And2 {
 								
 								int id = results.get(i).get(j);
 								
-								NameFingerprintPair item = repos.get(i).getRawRecord().get(id);
+								// rawRecords has 1 offset!!!
+								RawRecord item = rawRecords.get(id-1);
 								
-								System.out.println(id + " :: " + item.getName());
+								System.out.println(item.getId() + " :: " + item.getName());
 							}
 						}
 					} else {
