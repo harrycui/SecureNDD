@@ -6,11 +6,9 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import local.NameFingerprintPair;
-import base.Parameters;
-import util.AESCoder;
 import util.PRF;
 import util.Paillier;
+import base.Parameters;
 
 public class InsertThread extends Thread {
 

@@ -9,8 +9,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import local.NameFingerprintPair;
-import util.AESCoder;
 import util.ConfigParser;
 import util.FileTool;
 import util.PRF;
