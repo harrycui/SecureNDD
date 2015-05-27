@@ -9,12 +9,17 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+import local.NameFingerprintPair;
+import util.AESCoder;
 import util.ConfigParser;
 import util.FileTool;
 import util.PRF;
+import util.Paillier;
 import util.PrintTool;
 import base.Parameters;
 import base.SysConstant;
+import cloud.CSP;
+import cloud.EncryptedFingerprint;
 import cloud.InsertThread;
 import cloud.MyCountDown;
 import cloud.RawRecord;
@@ -43,16 +48,20 @@ public class TestPhase1And2 {
 		int numOfRepo = config.getInt("numOfRepo");
 		String pairingSettingPath = config.getString("pairingSettingPath");
 		int lshL = config.getInt("lshL");
+		int bitLength = config.getInt("bitLength");
+		int certainty = config.getInt("certainty");
 		
 		
 		// Step 1: preprocess: setup keys and read file
-		Parameters params = new Parameters(pairingSettingPath, lshL);
+		Parameters params = new Parameters(pairingSettingPath, lshL, bitLength, certainty);
+		
+		CSP csp = new CSP(params);
 		
 		System.out.println(">>> System parameters have been initialized");
 		System.out.println(">>> Now, reading the raw test data from " + inputPath + inputFileName);
 		
-		// keyV0 is the key for the detector
-		Element keyV0 = params.pairing.getZr().newRandomElement().getImmutable();
+		// the first user is the detector
+		int detectorId = csp.register();
 		
 		// TODO: read each line at the time of inserting
 		// read file to lines list
@@ -72,12 +81,14 @@ public class TestPhase1And2 {
 		
 		for (int i = 0; i < numOfRepo; i++) {
 			
-			Repository repo = new Repository(i, params);
+			int rid = csp.register();
 			
-			Element delta = params.g2.powZn(repo.getKeyV().div(keyV0));
+			Repository repo = new Repository(rid, params, csp.getKeyV(rid), csp.getKeyPublic(rid));
+			
+			Element delta = csp.authorize(rid, detectorId);
 					
 			// id = 0 is the detector
-			repo.addDelta(0, delta);
+			repo.addDelta(detectorId, delta);
 			
 			repos.add(repo);
 		}
@@ -217,7 +228,7 @@ public class TestPhase1And2 {
 							rawQuery = rawRecords.get(queryIndex-1);
 
 							System.out.println("For query item id : "
-									+ rawQuery.getId() + ", name : " + rawQuery.getName());
+									+ rawQuery.getId() + ", name : " + rawQuery.getName() + ", fingerprint : " + rawQuery.getValue());
 						}
 					} catch (NumberFormatException e) {
 						System.out
@@ -237,7 +248,7 @@ public class TestPhase1And2 {
 					
 					for (int i = 0; i < lshL; i++) {
 						
-						Element t = params.h1.pow(BigInteger.valueOf(lsh[i])).powZn(keyV0);
+						Element t = params.h1Pre.pow(BigInteger.valueOf(lsh[i])).powZn(csp.getKeyV(detectorId));
 						
 						Q.add(t);
 					}
@@ -258,7 +269,7 @@ public class TestPhase1And2 {
 
 			        for (int i = 0; i < numOfRepo; i++) {
 			        	
-			        	SearchThread t = new SearchThread("Thread " + i, threadCounter2, repos.get(i), 0, Q, results.get(i));
+			        	SearchThread t = new SearchThread("Thread " + i, threadCounter2, repos.get(i), detectorId, Q, results.get(i));
 
 			            t.start();
 			        }
@@ -271,11 +282,7 @@ public class TestPhase1And2 {
 					
 					for (int i = 0; i < numOfRepo; i++) {
 						
-						//List<Integer> resultOfRepo = repos.get(i).secureSearch(0, Q);
-						
 						numOfNDD += results.get(i).size();
-						
-						//results.add(resultOfRepo);
 					}
 
 					long time2 = System.currentTimeMillis();
@@ -289,14 +296,25 @@ public class TestPhase1And2 {
 						
 						for (int i = 0; i < repos.size(); i++) {
 							
+							Repository repo = repos.get(i);
+							
 							for (int j = 0; j < results.get(i).size(); j++) {
 								
 								int id = results.get(i).get(j);
 								
 								// rawRecords has 1 offset!!!
-								RawRecord item = rawRecords.get(id-1);
+								// RawRecord item = rawRecords.get(id-1);
+								EncryptedFingerprint item = repo.getEncryptedFingerprints().get(id);
 								
-								System.out.println(item.getId() + " :: " + item.getName());
+								BigInteger plainFP;
+								try {
+									plainFP = Paillier.Dec(item.getCipherFP(), repo.getKeyF(), csp.getKeyPrivate(repo.getId()));
+									
+									System.out.println(id + " :: " + item.getName() + " :: " + plainFP);	
+								} catch (Exception e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
 							}
 						}
 					} else {

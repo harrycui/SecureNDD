@@ -2,44 +2,52 @@ package cloud;
 
 import it.unisa.dia.gas.jpbc.Element;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
 
-import local.NameFingerprintPair;
+import secure.PaillierPublicKey;
 import util.PRF;
 import base.Parameters;
 
 public class Repository {
 
 	private int id;
+
+	private Parameters params;
+	
+	// key to encrypt each LSH keyword (a.k.a. token)
+	private Element keyV;
+	
+	// key to encrypt each fingerprint
+	private PaillierPublicKey keyF;
 	
 	private List<SecureRecord> secureRecords;
-	
-	private Element keyV;
 	
 	private Map<Integer, Element> deltas;
 	
 	//private Map<Integer, NameFingerprintPair> rawRecord;
 	
-	private Parameters params;
+	private Map<Integer, EncryptedFingerprint> encryptedFingerprints;
 	
 	public Repository() {
 		
 	}
 	
-	public Repository(int id, Parameters params) {
+	public Repository(int id, Parameters params, Element keyV, PaillierPublicKey keyF) {
 		
 		this.id = id;
-		this.params = params;
+		this.params = new Parameters(params);
+		//this.params = params;
 		
-		this.keyV = params.pairing.getZr().newRandomElement().getImmutable();
+		this.keyV = keyV;
+		
+		this.keyF = keyF;
 		
 		this.secureRecords = new ArrayList<SecureRecord>();
 		this.deltas = new HashMap<Integer, Element>();
+		this.encryptedFingerprints = new HashMap<Integer, EncryptedFingerprint>();
 		//this.rawRecord = new HashMap<Integer, NameFingerprintPair>();
 	}
 	
@@ -53,54 +61,14 @@ public class Repository {
 		this.deltas.put(id, delta);
 	}
 	
-	public void insert(SecureRecord record) {
-		
-		this.secureRecords.add(record);
-	}
-	
 	/**
-	 * Read data record as a String
+	 * insert secure record
 	 * 
-	 * @param value
+	 * @param secureRecord
 	 */
-	public void insert(RawRecord rawRecord) {
+	public void insert(SecureRecord secureRecord) {
 		
-		
-		// Step 1: compute LSH vector
-		// TODO: implement the LSH functions: input-BigInteger output-long[]
-		long[] lsh = new long[params.lshL];
-		for (int i = 0; i < lsh.length; i++) {
-			lsh[i] = PRF.HMACSHA1ToUnsignedInt(rawRecord.getValue().toString(), String.valueOf(i));
-		}
-		
-		// Step 2: encrypt the LSH vector
-		
-		List<SecureToken> secureTokens = new ArrayList<SecureToken>(params.lshL);
-		
-		for (int i = 0; i < lsh.length; i++) {
-			
-			Element r = params.pairing.getGT().newRandomElement().getImmutable();
-			
-			String strR = r.toString();
-			
-			//System.out.println(strR);
-			
-			String t = (params.pairing.pairing(params.h1.pow(BigInteger.valueOf(lsh[i])), params.g2)).powZn(keyV).toString();
-			
-			//System.out.println(t);
-			
-			long c = PRF.HMACSHA1ToUnsignedInt(t, strR);
-			
-			//System.out.println("c = " + c);
-			
-			SecureToken seT = new SecureToken(strR, c);
-			
-			secureTokens.add(seT);
-		}
-		
-		SecureRecord record = new SecureRecord(rawRecord.getId(), secureTokens);
-		
-		this.secureRecords.add(record);
+		this.secureRecords.add(secureRecord);
 	}
 	
 	
@@ -187,5 +155,30 @@ public class Repository {
 
 	public void setDeltas(Map<Integer, Element> deltas) {
 		this.deltas = deltas;
+	}
+
+	public Map<Integer, EncryptedFingerprint> getEncryptedFingerprints() {
+		return encryptedFingerprints;
+	}
+
+	public void setEncryptedFingerprints(
+			Map<Integer, EncryptedFingerprint> encryptedFingerprints) {
+		this.encryptedFingerprints = encryptedFingerprints;
+	}
+
+	public Parameters getParams() {
+		return params;
+	}
+
+	public void setParams(Parameters params) {
+		this.params = params;
+	}
+
+	public PaillierPublicKey getKeyF() {
+		return keyF;
+	}
+
+	public void setKeyF(PaillierPublicKey keyF) {
+		this.keyF = keyF;
 	}
 }
