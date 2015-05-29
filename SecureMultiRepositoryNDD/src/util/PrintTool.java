@@ -42,4 +42,20 @@ public class PrintTool {
 		
 		PrintTool.println(type, msg + suffix);
 	}
+	
+	public static void printArray(long[] vector) {
+		
+		System.out.print("[");
+		
+		for (int i = 0; i < vector.length; i++) {
+			
+			System.out.print(vector[i]);
+			
+			if (i != vector.length - 1) {
+				System.out.print(", ");
+			} else {
+				System.out.println("]");
+			}
+		}
+	}
 }

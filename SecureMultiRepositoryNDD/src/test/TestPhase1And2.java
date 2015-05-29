@@ -9,10 +9,10 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+import secure.PRF;
+import secure.Paillier;
 import util.ConfigParser;
 import util.FileTool;
-import util.PRF;
-import util.Paillier;
 import util.PrintTool;
 import base.Parameters;
 import base.SysConstant;

@@ -1,10 +1,10 @@
 package local;
 
-import org.opencv.core.Mat;
+import imageHash.AHash;
+import imageHash.FakeHash;
+import imageHash.ImageHashTool;
 
-import util.AHash;
-import util.FakeHash;
-import util.ImageHashTool;
+import org.opencv.core.Mat;
 
 public class Image extends Document {
 

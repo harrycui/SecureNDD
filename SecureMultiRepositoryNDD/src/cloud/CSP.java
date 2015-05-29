@@ -7,10 +7,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import base.Parameters;
+import secure.Paillier;
 import secure.PaillierPrivateKey;
 import secure.PaillierPublicKey;
 import secure.SecureKeyGroup;
-import util.Paillier;
 
 public class CSP {
 

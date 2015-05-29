@@ -1,4 +1,4 @@
-package util;
+package secure;
 
 /**
 * This program is free software: you can redistribute it and/or modify it 
@@ -17,9 +17,6 @@ package util;
 
 import java.math.*;
 import java.util.*;
-
-import secure.PaillierPrivateKey;
-import secure.PaillierPublicKey;
 
 /**
 * Paillier Cryptosystem <br><br>

@@ -34,7 +34,7 @@ public class SearchThread extends Thread {
 		
 		resultOfRepo.addAll(repo.secureSearch(id, query));
 
-		System.out.println(getName() + " is finished! Number of result: " + resultOfRepo.size());
+		System.out.println(getName() + " is finished! Number of candidate: " + resultOfRepo.size());
 		threadCounter.countDown();
 	}
 }

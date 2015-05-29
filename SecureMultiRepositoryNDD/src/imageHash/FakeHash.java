@@ -1,4 +1,4 @@
-package util;
+package imageHash;
 
 import java.util.Random;
 

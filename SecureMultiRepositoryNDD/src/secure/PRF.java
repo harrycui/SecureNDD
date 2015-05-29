@@ -1,8 +1,11 @@
-package util;
+package secure;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+
+import util.Converter;
+
 import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;

@@ -1,5 +1,7 @@
 package test;
 
+import imageHash.ImageHashTool;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +11,6 @@ import local.Document;
 import local.Image;
 import local.NameFingerprintPair;
 import util.FileTool;
-import util.ImageHashTool;
 
 public class TestWrite2File {
 

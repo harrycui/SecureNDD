@@ -6,8 +6,8 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import util.PRF;
-import util.Paillier;
+import secure.PRF;
+import secure.Paillier;
 import base.Parameters;
 
 public class InsertThread extends Thread {

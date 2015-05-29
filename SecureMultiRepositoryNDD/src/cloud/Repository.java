@@ -7,8 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import secure.PRF;
 import secure.PaillierPublicKey;
-import util.PRF;
 import base.Parameters;
 
 public class Repository {

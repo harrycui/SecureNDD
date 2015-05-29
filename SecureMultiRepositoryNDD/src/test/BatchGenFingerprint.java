@@ -1,5 +1,7 @@
 package test;
 
+import imageHash.ImageHashTool;
+
 import java.io.File;
 import java.lang.ref.SoftReference;
 import java.math.BigInteger;
@@ -17,7 +19,6 @@ import org.opencv.highgui.Highgui;
 
 import util.ConfigParser;
 import util.FileTool;
-import util.ImageHashTool;
 import util.PrintTool;
 
 public class BatchGenFingerprint {
