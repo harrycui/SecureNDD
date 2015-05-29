@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import base.Distance;
 import base.PlainNDD;
 import base.SysConstant;
 import local.NameFingerprintPair;
@@ -35,6 +36,7 @@ public class TestOnPlaintext {
 		//String outputPath = config.getString("outputPath");
 		//String outFileName = config.getString("outFileName");
 		int numOfLimit = config.getInt("numOfLimit");
+		int threshold = config.getInt("threshold");
 		
 		List<NameFingerprintPair> fingerprints = FileTool
 				.readFingerprintFromFile2List(inputPath, inputFileName, false);
@@ -91,7 +93,7 @@ public class TestOnPlaintext {
             	System.out.println("\nModel: query.");
 
                 while (true) {
-                    System.out.println("Now, you can search by input you query id range from [1, " + fingerprints.size() + "]: (-1 means return to root menu)");
+                    System.out.println("\n\nNow, you can search by input you query id range from [1, " + fingerprints.size() + "]: (-1 means return to root menu)");
 
                     String queryStr = null;
                     int queryIndex;
@@ -116,7 +118,7 @@ public class TestOnPlaintext {
                         } else {
                             queryIndex = Integer.parseInt(queryStr);
 
-                            System.out.println("For query item id : " + queryIndex);
+                            System.out.println("For query item id : " + queryIndex + ", name : " + fingerprints.get(queryIndex-1).getName() + ", fingerprint : " + fingerprints.get(queryIndex-1).getValue());
                         }
                     } catch (NumberFormatException e) {
                         System.out.println("Warning: query index should be limited in [1, " + fingerprints.size() + "]");
@@ -125,7 +127,7 @@ public class TestOnPlaintext {
 
                     long time1 = System.nanoTime();
                     
-                    Set<NameFingerprintPair> searchResult = PlainNDD.searchOnPlaintext(fingerprints.get(queryIndex-1).getValue(), fingerprints, 8);
+                    Set<NameFingerprintPair> searchResult = PlainNDD.searchOnPlaintext(fingerprints.get(queryIndex-1).getValue(), fingerprints, threshold);
 
                     long time2 = System.nanoTime();
                     
@@ -144,7 +146,7 @@ public class TestOnPlaintext {
 							
 							NameFingerprintPair temp = iterator.next();
 							
-							System.out.println((num++) + " : " + temp.getName());
+							System.out.println((num++) + " : " + temp.getName() + " :: " + temp.getValue() + " >>> dist: " + Distance.getHammingDistanceV2(fingerprints.get(queryIndex-1).getValue(), temp.getValue()));
 						}
 					} else {
                         System.out.println("No similar item!!!");

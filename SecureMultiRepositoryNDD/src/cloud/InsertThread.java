@@ -39,18 +39,14 @@ public class InsertThread extends Thread {
 			RawRecord rd = rawRecords.get(i);
 
 			// Step 1: compute LSH vector
-			// TODO: implement the LSH functions: input-BigInteger output-long[]
-			long[] lsh = new long[params.lshL];
+			long[] lshVector = params.lsh.computeLSH(rd.getValue());
 			
-			for (int j = 0; j < lsh.length; j++) {
-				lsh[j] = PRF.HMACSHA1ToUnsignedInt(rd.getValue().toString(), String.valueOf(j));
-			}
 			
 			// Step 2: encrypt the LSH vector
 			
 			List<SecureToken> secureTokens = new ArrayList<SecureToken>(params.lshL);
 			
-			for (int j = 0; j < lsh.length; j++) {
+			for (int j = 0; j < lshVector.length; j++) {
 				
 				Element r = params.pairing.getGT().newRandomElement().getImmutable();
 				
@@ -58,7 +54,7 @@ public class InsertThread extends Thread {
 				
 				//System.out.println(strR);
 				
-				String t = (params.pairing.pairing(params.h1Pre.pow(BigInteger.valueOf(lsh[j])), params.g2)).powZn(this.repo.getKeyV()).toString();
+				String t = (params.pairing.pairing(params.h1Pre.pow(BigInteger.valueOf(lshVector[j])), params.g2)).powZn(this.repo.getKeyV()).toString();
 				
 				//System.out.println(t);
 				

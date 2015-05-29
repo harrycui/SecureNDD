@@ -17,11 +17,17 @@ public class Parameters {
 	
 	public int lshL;
 	
+	public int lshDimension;
+	
+	public int lshK;
+	
 	public int bitLength;
 	
 	public int certainty;
+	
+	public HammingLSH lsh;
 
-	public Parameters(String settingPath, int lshL, int bitLength, int certainty) {
+	public Parameters(String settingPath, int lshL, int lshDimension, int lshK, int bitLength, int certainty) {
 
 		this.pairing = PairingFactory
 				.getPairing(settingPath);
@@ -42,9 +48,15 @@ public class Parameters {
 		
 		this.lshL = lshL;
 		
+		this.lshDimension = lshDimension;
+		
+		this.lshK = lshK;
+		
 		this.bitLength = bitLength;
 		
 		this.certainty = certainty;
+		
+		this.lsh = new HammingLSH(lshDimension, lshL, lshK);
 	}
 	
 	public Parameters(Parameters params) {
@@ -67,8 +79,14 @@ public class Parameters {
 		
 		this.lshL = params.lshL;
 		
+		this.lshDimension = params.lshDimension;
+		
+		this.lshK = params.lshK;
+		
 		this.bitLength = params.bitLength;
 		
 		this.certainty = params.certainty;
+		
+		this.lsh = new HammingLSH(params.lshDimension, params.lshL, params.lshK);
 	}
 }

@@ -14,6 +14,8 @@ import secure.Paillier;
 import util.ConfigParser;
 import util.FileTool;
 import util.PrintTool;
+import base.Distance;
+import base.HammingLSH;
 import base.Parameters;
 import base.SysConstant;
 import cloud.CSP;
@@ -24,7 +26,7 @@ import cloud.RawRecord;
 import cloud.Repository;
 import cloud.SearchThread;
 
-public class TestPhase1And2 {
+public class TestOnCiphertext {
 
 	public static void main(String[] args) {
 
@@ -45,15 +47,21 @@ public class TestPhase1And2 {
 		int numOfLimit = config.getInt("numOfLimit");
 		int numOfRepo = config.getInt("numOfRepo");
 		String pairingSettingPath = config.getString("pairingSettingPath");
-		int lshL = config.getInt("lshL");
+		
 		int bitLength = config.getInt("bitLength");
 		int certainty = config.getInt("certainty");
 		
+		int lshL = config.getInt("lshL");
+		int lshDimension = config.getInt("lshDimension");
+		int lshK = config.getInt("lshK");
+		
 		
 		// Step 1: preprocess: setup keys and read file
-		Parameters params = new Parameters(pairingSettingPath, lshL, bitLength, certainty);
+		Parameters params = new Parameters(pairingSettingPath, lshL, lshDimension, lshK, bitLength, certainty);
 		
 		CSP csp = new CSP(params);
+		
+		HammingLSH lsh = new HammingLSH(lshDimension, lshL, lshK);
 		
 		System.out.println(">>> System parameters have been initialized");
 		System.out.println(">>> Now, reading the raw test data from " + inputPath + inputFileName);
@@ -193,7 +201,7 @@ public class TestPhase1And2 {
 
 				while (true) {
 					System.out
-							.println("Now, you can search by input you query id range from [1, "
+							.println("\n\nNow, you can search by input you query id range from [1, "
 									+ rawRecords.size()
 									+ "]: (-1 means return to root menu)");
 
@@ -239,14 +247,11 @@ public class TestPhase1And2 {
 					List<Element> Q = new ArrayList<Element>(lshL);
 					
 
-					long[] lsh = new long[params.lshL];
-					for (int i = 0; i < lsh.length; i++) {
-						lsh[i] = PRF.HMACSHA1ToUnsignedInt(rawQuery.getValue().toString(), String.valueOf(i));
-					}
+					long[] lshVector = lsh.computeLSH(rawQuery.getValue());
 					
 					for (int i = 0; i < lshL; i++) {
 						
-						Element t = params.h1Pre.pow(BigInteger.valueOf(lsh[i])).powZn(csp.getKeyV(detectorId));
+						Element t = params.h1Pre.pow(BigInteger.valueOf(lshVector[i])).powZn(csp.getKeyV(detectorId));
 						
 						Q.add(t);
 					}
@@ -308,7 +313,7 @@ public class TestPhase1And2 {
 								try {
 									plainFP = Paillier.Dec(item.getCipherFP(), repo.getKeyF(), csp.getKeyPrivate(repo.getId()));
 									
-									System.out.println(id + " :: " + item.getName() + " :: " + plainFP);	
+									System.out.println(id + " :: " + item.getName() + " :: " + plainFP + " >>> dist: " + Distance.getHammingDistanceV2(rawQuery.getValue(), plainFP));	
 								} catch (Exception e) {
 									// TODO Auto-generated catch block
 									e.printStackTrace();

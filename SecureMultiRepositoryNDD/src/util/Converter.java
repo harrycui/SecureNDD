@@ -5,14 +5,26 @@ import java.nio.ByteBuffer;
 
 public class Converter {
 
+	/**
+	 * 
+	 * @param bi
+	 * @param length number of byte
+	 * @return
+	 */
 	public static String bigInteger2String(BigInteger bi, int length) {
 
 		String ZERO = "00000000";
 		byte[] data = bi.toByteArray();
 
 		StringBuffer sb = new StringBuffer();
-
-		if (data.length < length) {
+		
+		if (data.length > length) {
+			
+			byte[] temp = new byte[length];
+			System.arraycopy(data, data.length - length, temp, 0, length);
+			
+			data = temp;
+		} else if (data.length < length) {
 			int paddingNum = length - data.length;
 
 			for (int i = 0; i < paddingNum; i++) {
@@ -30,7 +42,8 @@ public class Converter {
 
 			sb.append(s);
 		}
-
+		
+		//System.out.println(sb.toString());
 		return sb.toString();
 	}
 	

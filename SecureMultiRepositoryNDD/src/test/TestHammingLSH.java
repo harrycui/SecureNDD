@@ -1,5 +1,7 @@
 package test;
 
+import java.math.BigInteger;
+
 import util.PrintTool;
 import base.HammingLSH;
 
@@ -27,6 +29,19 @@ public class TestHammingLSH {
 		
 		PrintTool.printArray(hash);
 		PrintTool.printArray(hash2);
+		PrintTool.printArray(hash3);
+		
+		BigInteger b1 = BigInteger.valueOf(1022L);;
+		
+		long[] hash1 = lsh.computeLSH(b1);
+		
+		BigInteger b2 = BigInteger.valueOf(1023L);
+		
+		long[] hash22 = lsh.computeLSH(b2);
+		
+		PrintTool.printArray(hash);
+		PrintTool.printArray(hash1);
+		PrintTool.printArray(hash22);
 		PrintTool.printArray(hash3);
 	}
 	

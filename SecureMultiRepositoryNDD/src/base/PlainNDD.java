@@ -14,7 +14,7 @@ public class PlainNDD {
 		Set<NameFingerprintPair> results = new HashSet<NameFingerprintPair>();
 		
 		if (epsilon <= 0) {
-			epsilon = 20; // default value
+			epsilon = 10; // default value
 		}
 		
 		for (NameFingerprintPair item : dataset) {

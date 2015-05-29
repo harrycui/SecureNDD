@@ -1,8 +1,10 @@
 package base;
 
+import java.math.BigInteger;
 import java.util.Random;
 
 import secure.PRF;
+import util.Converter;
 
 public class HammingLSH {
 
@@ -60,11 +62,52 @@ public class HammingLSH {
 	}
 	
 	/**
+	 * For a 0/1 string, the sequence is inverted.
+	 * 
+	 * @param vector
+	 * @param lIndex
+	 * @return
+	 */
+	private long generateHashKey(String vector, int lIndex) {
+		
+		StringBuilder sb = new StringBuilder();
+		
+		char[] hashedData = new char[this.k];
+		
+		for (int i = 0; i < this.k; i++) {
+			
+			hashedData[i] = vector.charAt(63-hashFamily[lIndex][i]);
+			sb.append(hashedData[i]);
+		}
+		
+		return PRF.SHA256ToUnsignedInt(sb.toString());
+	}
+	
+	/**
 	 * 
 	 * @param vector each element in this vector is 0 or 1
 	 * @return
 	 */
 	public long[] computeLSH(int[] vector) {
+		
+		long[] lsh = new long[this.l];
+		
+		for (int i = 0; i < this.l; i++) {
+			
+			lsh[i] = generateHashKey(vector, i);
+		}
+		
+		return lsh;
+	}
+	
+	/**
+	 * 
+	 * @param vector a string consists of 0/1
+	 * @return
+	 */
+	public long[] computeLSH(BigInteger bi) {
+		
+		String vector = Converter.bigInteger2String(bi, dimension/8);
 		
 		long[] lsh = new long[this.l];
 		
