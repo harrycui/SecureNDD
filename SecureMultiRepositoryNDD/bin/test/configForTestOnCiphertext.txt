@@ -1,0 +1,14 @@
+inputPath: /home/ubuntu/infocom2016/
+inputFileName: fingerprint.txt
+numOfLimit: 200
+numOfRepo: 4
+pairingSettingPath: /home/ubuntu/github/SecureNDD/SecureMultiRepositoryNDD/src/test/d159.properties
+lshL: 5
+# parameters for Paillier
+bitLength: 512
+certainty: 64
+# parameters for LSH
+lshL: 5
+lshDimension: 64
+# the larger K, the more accurate, but the smaller, the more items can be located
+lshK: 15
