@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import secure.PRF;
 import secure.Paillier;
@@ -20,12 +22,20 @@ import base.Parameters;
 import base.SysConstant;
 import cloud.CSP;
 import cloud.EncryptedFingerprint;
-import cloud.InsertThread;
 import cloud.MyCountDown;
 import cloud.RawRecord;
 import cloud.Repository;
 import cloud.SearchThread;
+import cloud.SecureToken;
+import cloud.SingleRepoInsertThread;
 
+/**
+ * For performance evaluation, we just use one repository and involve the ranking mechanism.
+ * 
+ * The thread is in "L" level.
+ * @author Helei Cui
+ *
+ */
 public class PerformanceTest {
 
 	public static void main(String[] args) {
@@ -42,10 +52,10 @@ public class PerformanceTest {
 
 		String inputPath = config.getString("inputPath");
 		String inputFileName = config.getString("inputFileName");
-		// String outputPath = config.getString("outputPath");
-		// String outFileName = config.getString("outFileName");
 		int numOfLimit = config.getInt("numOfLimit");
-		int numOfRepo = config.getInt("numOfRepo");
+		
+		// hardcode: set numOfRepo = 1
+		int numOfRepo = 1; //config.getInt("numOfRepo");
 		String pairingSettingPath = config.getString("pairingSettingPath");
 		
 		int bitLength = config.getInt("bitLength");
@@ -66,7 +76,7 @@ public class PerformanceTest {
 		System.out.println(">>> System parameters have been initialized");
 		System.out.println(">>> Now, reading the raw test data from " + inputPath + inputFileName);
 		
-		// the first user is the detector
+		// the first user is the detector, id is from 0?1
 		int detectorId = csp.register();
 		
 		// TODO: read each line at the time of inserting
@@ -83,50 +93,34 @@ public class PerformanceTest {
 		System.out.println(">>> There are " + numOfLimit + " records.");
 		System.out.println(">>> Now, initializing " + numOfRepo + " repositories.");
 		
-		List<Repository> repos = new ArrayList<Repository>(numOfRepo);
 		
-		for (int i = 0; i < numOfRepo; i++) {
-			
-			int rid = csp.register();
-			
-			Repository repo = new Repository(rid, params, csp.getKeyV(rid), csp.getKeyPublic(rid));
-			
-			Element delta = csp.authorize(rid, detectorId);
+		// the repository registers
+		int rid = csp.register();
+		
+		Repository repo = new Repository(rid, params, csp.getKeyV(rid), csp.getKeyPublic(rid));
+		
+		// authorize the detector
+		Element delta = csp.authorize(rid, detectorId);
 					
-			// id = 0 is the detector
-			repo.addDelta(detectorId, delta);
-			
-			repos.add(repo);
-		}
+		// id = 0 is the detector
+		repo.addDelta(detectorId, delta);
 		
 		System.out.println(">>> Now, start inserting data into repositories...");
 		
+		long startTimeOfInsert = System.currentTimeMillis();
 		
+		// Compute LSH
+		List<Map<Integer, Long>> lshVectors = computeLSH(rawRecords, params);
 		
-		/*for (int i = 0; i < numOfLimit; i++) {
-			
-			repos.get(0).insert(strRecords.get(i));
-		}*/
-		
-		long stOfInsert = System.currentTimeMillis();
+		// Encrypt fingerprints
+		encryptFP(rawRecords, params, repo);
 		
 		//multiple threads
-        MyCountDown threadCounter = new MyCountDown(numOfRepo);
+        MyCountDown threadCounter = new MyCountDown(lshL);
 
-        for (int i = 0; i < numOfRepo; i++) {
+        for (int i = 0; i < lshL; i++) {
 
-            InsertThread t = null;
-
-            if (i == numOfRepo - 1) {
-
-                List<RawRecord> partStrRecords = rawRecords.subList(numOfLimit / numOfRepo * i, numOfLimit);
-
-                t = new InsertThread("Thread " + i, threadCounter, repos.get(i), partStrRecords);
-            } else {
-
-            	List<RawRecord> partStrRecords = rawRecords.subList(numOfLimit / numOfRepo * i, numOfLimit / numOfRepo * (i + 1));
-                t = new InsertThread("Thread " + i, threadCounter, repos.get(i), partStrRecords);
-            }
+        	SingleRepoInsertThread t = new SingleRepoInsertThread("Thread " + i, threadCounter, repo.getKeyV(), lshVectors.get(i), repo.getSecureRecords().get(i), params);
 
             t.start();
         }
@@ -139,7 +133,7 @@ public class PerformanceTest {
         
         long etOfInsert = System.currentTimeMillis();
         
-        System.out.println("Insert time: " + (etOfInsert - stOfInsert) + " ms.");
+        System.out.println("Insert time: " + (etOfInsert - startTimeOfInsert) + " ms.");
 
 		// %%%%%%%%%%%%%%%%%% test %%%%%%%%%%%%%%%%%%%
 
@@ -272,7 +266,7 @@ public class PerformanceTest {
 
 			        for (int i = 0; i < numOfRepo; i++) {
 			        	
-			        	SearchThread t = new SearchThread("Thread " + i, threadCounter2, repos.get(i), detectorId, Q, results.get(i));
+			        	SearchThread t = new SearchThread("Thread " + i, threadCounter2, repo, detectorId, Q, results.get(i));
 
 			            t.start();
 			        }
@@ -297,13 +291,13 @@ public class PerformanceTest {
 						PrintTool.println(PrintTool.OUT, "there are "
 								+ numOfNDD + " near-duplicates: \n");
 						
-						for (int i = 0; i < repos.size(); i++) {
+						//for (int i = 0; i < repos.size(); i++) {
 							
-							Repository repo = repos.get(i);
+							//Repository repo = repos.get(i);
 							
-							for (int j = 0; j < results.get(i).size(); j++) {
+							for (int j = 0; j < results.get(0).size(); j++) {
 								
-								int id = results.get(i).get(j);
+								int id = results.get(0).get(j);
 								
 								// rawRecords has 1 offset!!!
 								// RawRecord item = rawRecords.get(id-1);
@@ -319,13 +313,50 @@ public class PerformanceTest {
 									e.printStackTrace();
 								}
 							}
-						}
+						//}
 					} else {
 						System.out.println("No similar item!!!");
 					}
 				}
 			}
 
+		}
+	}
+
+	private static List<Map<Integer, Long>> computeLSH(List<RawRecord> rawRecords,
+			Parameters params) {
+		
+		List<Map<Integer, Long>> lshVectorsInL = new ArrayList<Map<Integer, Long>>(params.lshL);
+
+		for (int i = 0; i < params.lshL; i++) {
+			lshVectorsInL.add(new HashMap<Integer, Long>());
+		}
+
+		for (int i = 0; i < rawRecords.size(); i++) {
+			
+			RawRecord rd = rawRecords.get(i);
+
+			// compute LSH vector
+			long[] lshVector = params.lsh.computeLSH(rd.getValue());
+			
+			for (int j = 0; j < lshVector.length; j++) {
+				lshVectorsInL.get(j).put(rd.getId(), lshVector[j]);
+			}
+		}
+		return lshVectorsInL;
+	}
+	
+	private static void encryptFP(List<RawRecord> rawRecords, Parameters params, Repository repo) {
+
+		//Map<Integer, EncryptedFingerprint> encryptedFingerprints = new HashMap<Integer, EncryptedFingerprint>();
+		
+		for (int i = 0; i < rawRecords.size(); i++) {
+			
+			// encrypt fingerprint
+			BigInteger cipherFP = Paillier.Enc(rawRecords.get(i).getValue(), repo.getKeyF());
+			
+			repo.getEncryptedFingerprints().put(rawRecords.get(i).getId(),
+					new EncryptedFingerprint(rawRecords.get(i).getName(), cipherFP));
 		}
 	}
 }

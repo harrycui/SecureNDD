@@ -23,7 +23,9 @@ public class Repository {
 	// key to encrypt each fingerprint
 	private PaillierPublicKey keyF;
 	
-	private List<SecureRecord> secureRecords;
+	//private List<SecureRecord> secureRecords;
+	// In this version, each "l" is grouped together (in one Map), secureRecords.size() = l
+	private List<Map<Integer, SecureToken>> secureRecords;
 	
 	private Map<Integer, Element> deltas;
 	
@@ -45,7 +47,12 @@ public class Repository {
 		
 		this.keyF = keyF;
 		
-		this.secureRecords = new ArrayList<SecureRecord>();
+		this.secureRecords = new ArrayList<Map<Integer, SecureToken>>(params.lshL);
+		
+		for (int i = 0; i < params.lshL; i++) {
+			this.secureRecords.add(new HashMap<Integer, SecureToken>());
+		}
+		
 		this.deltas = new HashMap<Integer, Element>();
 		this.encryptedFingerprints = new HashMap<Integer, EncryptedFingerprint>();
 		//this.rawRecord = new HashMap<Integer, NameFingerprintPair>();
@@ -66,9 +73,10 @@ public class Repository {
 	 * 
 	 * @param secureRecord
 	 */
-	public void insert(SecureRecord secureRecord) {
+	public void insert(Map<Integer, SecureToken> mapOfL, int id, SecureToken token) {
 		
-		this.secureRecords.add(secureRecord);
+		//this.secureRecords.add(secureRecord);
+		mapOfL.put(id, token);
 	}
 	
 	
@@ -76,7 +84,7 @@ public class Repository {
 		
 		List<Integer> results = new ArrayList<Integer>();
 		
-		if (!this.deltas.containsKey(uid)) {
+		/*if (!this.deltas.containsKey(uid)) {
 			
 			System.out.println("This user has not been authorized in repository (id = " + this.id + ")!");
 			
@@ -96,7 +104,7 @@ public class Repository {
 					results.add(secureRecord.getId());
 				}
 			}
-		}
+		}*/
 		
 		return results;
 	}
@@ -131,14 +139,6 @@ public class Repository {
 
 	public void setId(int id) {
 		this.id = id;
-	}
-
-	public List<SecureRecord> getSecureRecords() {
-		return secureRecords;
-	}
-
-	public void setSecureRecords(List<SecureRecord> secureRecords) {
-		this.secureRecords = secureRecords;
 	}
 
 	public Element getKeyV() {
@@ -180,5 +180,13 @@ public class Repository {
 
 	public void setKeyF(PaillierPublicKey keyF) {
 		this.keyF = keyF;
+	}
+
+	public List<Map<Integer, SecureToken>> getSecureRecords() {
+		return secureRecords;
+	}
+
+	public void setSecureRecords(List<Map<Integer, SecureToken>> secureRecords) {
+		this.secureRecords = secureRecords;
 	}
 }
