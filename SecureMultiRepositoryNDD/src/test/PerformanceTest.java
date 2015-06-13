@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import secure.PRF;
 import secure.Paillier;
 import util.ConfigParser;
 import util.FileTool;
@@ -25,7 +24,6 @@ import cloud.EncryptedFingerprint;
 import cloud.MyCountDown;
 import cloud.RawRecord;
 import cloud.Repository;
-import cloud.SearchThread;
 import cloud.SecureToken;
 import cloud.SingleRepoInsertThread;
 
@@ -64,6 +62,7 @@ public class PerformanceTest {
 		int lshL = config.getInt("lshL");
 		int lshDimension = config.getInt("lshDimension");
 		int lshK = config.getInt("lshK");
+		int threshold = config.getInt("threshold");
 		
 		
 		// Step 1: preprocess: setup keys and read file
@@ -111,9 +110,11 @@ public class PerformanceTest {
 		
 		// Compute LSH
 		List<Map<Integer, Long>> lshVectors = computeLSH(rawRecords, params);
+		System.out.println(">> LSH converted.");
 		
 		// Encrypt fingerprints
 		encryptFP(rawRecords, params, repo);
+		System.out.println(">> fingerprints encrypted.");
 		
 		//multiple threads
         MyCountDown threadCounter = new MyCountDown(lshL);
@@ -253,31 +254,44 @@ public class PerformanceTest {
 					
 					long time1 = System.currentTimeMillis();
 					
-					List<List<Integer>> results = new ArrayList<List<Integer>>(numOfRepo);
+					Map<Integer, Integer> searchResult = repo.secureSearch(detectorId, Q);
 					
-					for (int i = 0; i < numOfRepo; i++) {
-						results.add(new ArrayList<Integer>());
+					long time2 = System.currentTimeMillis();
+
+					System.out.println("Cost " + (time2 - time1) + " ms.");
+					
+					if (searchResult != null && searchResult.size() > 0) {
+						
+						for (Map.Entry<Integer, Integer> entry : searchResult.entrySet()) {
+
+							int id = entry.getKey();
+							int counter = entry.getValue();
+							
+							EncryptedFingerprint item = repo.getEncryptedFingerprints().get(id);
+							
+							BigInteger plainFP;
+							try {
+								plainFP = Paillier.Dec(item.getCipherFP(), repo.getKeyF(), csp.getKeyPrivate(repo.getId()));
+								
+								int dist = Distance.getHammingDistanceV2(rawQuery.getValue(), plainFP);
+								
+								if (dist > threshold) {
+									
+									continue;
+								}
+								
+								System.out.println(id + " :: " + item.getName() + " :: " + plainFP + " >>> dist: " + dist + "  Counter::" + counter);	
+								//System.out.println("Counter::" + counter);
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+					} else {
+						System.out.println("No similar item!!!");
 					}
 					
-					int numOfNDD = 0;
-					
-					//multiple threads
-			        MyCountDown threadCounter2 = new MyCountDown(numOfRepo);
-
-			        for (int i = 0; i < numOfRepo; i++) {
-			        	
-			        	SearchThread t = new SearchThread("Thread " + i, threadCounter2, repo, detectorId, Q, results.get(i));
-
-			            t.start();
-			        }
-
-			        // wait for all threads done
-			        while (true) {
-			            if (!threadCounter2.hasNext())
-			                break;
-			        }
-					
-					for (int i = 0; i < numOfRepo; i++) {
+					/*for (int i = 0; i < numOfRepo; i++) {
 						
 						numOfNDD += results.get(i).size();
 					}
@@ -316,7 +330,7 @@ public class PerformanceTest {
 						//}
 					} else {
 						System.out.println("No similar item!!!");
-					}
+					}*/
 				}
 			}
 

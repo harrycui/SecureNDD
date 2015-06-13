@@ -80,11 +80,11 @@ public class Repository {
 	}
 	
 	
-	public List<Integer> secureSearch(int uid, List<Element> query) {
+	public Map<Integer, Integer> secureSearch(int uid, List<Element> query) {
 		
-		List<Integer> results = new ArrayList<Integer>();
+		Map<Integer, Integer> searchResult = new HashMap<Integer, Integer>();
 		
-		/*if (!this.deltas.containsKey(uid)) {
+		if (!this.deltas.containsKey(uid)) {
 			
 			System.out.println("This user has not been authorized in repository (id = " + this.id + ")!");
 			
@@ -93,20 +93,57 @@ public class Repository {
 			
 			Element delta = this.deltas.get(uid);
 			
+			String[] adjustedQuery = new String[query.size()];
+			
+			// adjust the query tokens
+			for (int i = 0; i < query.size(); i++) {
+				
+				adjustedQuery[i] = params.pairing.pairing(query.get(i), delta)
+				.toString();
+			}
+			
 			// linear scan the secure tokens in repo
-			for (int i = 0; i < this.secureRecords.size(); i++) {
+	        List<List<Integer>> tempResults = new ArrayList<>(this.params.lshL);
+	        
+	        for (int i = 0; i < this.params.lshL; i++) {
+				tempResults.add(new ArrayList<>());
+			}
+	        
+	        
+	        
+	        //multiple threads
+	        MyCountDown threadCounter2 = new MyCountDown(this.params.lshL);
+	        for (int i = 0; i < this.params.lshL; i++) {
+	        	
+	        	SingleRepoSearchThread t = new SingleRepoSearchThread("Thread " + i, threadCounter2, adjustedQuery[i], secureRecords.get(i), tempResults.get(i));
+
+	            t.start();
+	        }
+
+	        // wait for all threads done
+	        while (true) {
+	            if (!threadCounter2.hasNext())
+	                break;
+	        }
+			
+			
+			for (int i = 0; i < this.params.lshL; i++) {
 				
-				SecureRecord secureRecord = this.secureRecords.get(i);
-				
-				boolean isMatch = this.checkMatch(query, secureRecord, delta);
-				
-				if (isMatch) {
-					results.add(secureRecord.getId());
+				for (int j = 0; j < tempResults.get(i).size(); j++) {
+					
+					int id = tempResults.get(i).get(j);
+					
+					if (searchResult.containsKey(id)) {
+						
+						searchResult.put(id, searchResult.get(id) + 1);
+					} else {
+						searchResult.put(id, 1);
+					}
 				}
 			}
-		}*/
+		}
 		
-		return results;
+		return searchResult;
 	}
 	
 	public boolean checkMatch(List<Element> query, SecureRecord secureRecord, Element delta) {

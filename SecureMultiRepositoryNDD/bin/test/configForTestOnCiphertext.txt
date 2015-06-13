@@ -11,4 +11,5 @@ certainty: 64
 lshL: 5
 lshDimension: 64
 # the larger K, the more accurate, but the smaller, the more items can be located
-lshK: 15
+lshK: 12
+threshold: 10
