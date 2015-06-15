@@ -17,6 +17,7 @@ import util.FileTool;
 import util.PrintTool;
 import base.Distance;
 import base.HammingLSH;
+import base.MyAnalysis;
 import base.Parameters;
 import base.SysConstant;
 import cloud.CSP;
@@ -24,7 +25,6 @@ import cloud.EncryptedFingerprint;
 import cloud.MyCountDown;
 import cloud.RawRecord;
 import cloud.Repository;
-import cloud.SecureToken;
 import cloud.SingleRepoInsertThread;
 
 /**
@@ -63,6 +63,7 @@ public class PerformanceTest {
 		int lshDimension = config.getInt("lshDimension");
 		int lshK = config.getInt("lshK");
 		int threshold = config.getInt("threshold");
+		int numOfPositive = config.getInt("numOfPositive");
 		
 		
 		// Step 1: preprocess: setup keys and read file
@@ -154,6 +155,7 @@ public class PerformanceTest {
 					.print("\n\n----------------------- Root Menu -----------------------\n"
 							+ "Please select an operation:\n"
 							+ "[1]  query test;\n"
+							+ "[2]  analyze recall and precision;\n"							
 							+ "[QUIT] quit system.\n\n"
 							+ "--->");
 			String inputStr;
@@ -169,11 +171,11 @@ public class PerformanceTest {
 						System.out.println("Quit!");
 
 						break;
-					} else if (Integer.parseInt(inputStr) > 1
+					} else if (Integer.parseInt(inputStr) > 2
 							|| Integer.parseInt(inputStr) < 1) {
 
 						System.out
-								.println("Warning: operation type should be limited in [1, 1], please try again!");
+								.println("Warning: operation type should be limited in [1, 2], please try again!");
 
 						continue;
 					} else {
@@ -181,7 +183,7 @@ public class PerformanceTest {
 					}
 				} catch (NumberFormatException e) {
 					System.out
-							.println("Warning: operation type should be limited in [1, 1], please try again!");
+							.println("Warning: operation type should be limited in [1, 2], please try again!");
 					continue;
 				}
 
@@ -238,6 +240,8 @@ public class PerformanceTest {
 						continue;
 					}
 
+					long stOfGenQuery = System.currentTimeMillis();
+					
 					// prepare the query message
 					List<Element> Q = new ArrayList<Element>(lshL);
 					
@@ -251,6 +255,9 @@ public class PerformanceTest {
 						Q.add(t);
 					}
 					
+					long etOfGenQuery = System.currentTimeMillis();
+					
+					System.out.println("Time cost of generate query: " + (etOfGenQuery - stOfGenQuery) + " ms.");
 					
 					long time1 = System.currentTimeMillis();
 					
@@ -291,49 +298,71 @@ public class PerformanceTest {
 						System.out.println("No similar item!!!");
 					}
 					
-					/*for (int i = 0; i < numOfRepo; i++) {
-						
-						numOfNDD += results.get(i).size();
-					}
-
-					long time2 = System.currentTimeMillis();
-
-					System.out.println("Cost " + (time2 - time1) + " ms.");
-
-					if (results != null && !results.isEmpty() && numOfNDD > 0) {
-
-						PrintTool.println(PrintTool.OUT, "there are "
-								+ numOfNDD + " near-duplicates: \n");
-						
-						//for (int i = 0; i < repos.size(); i++) {
-							
-							//Repository repo = repos.get(i);
-							
-							for (int j = 0; j < results.get(0).size(); j++) {
-								
-								int id = results.get(0).get(j);
-								
-								// rawRecords has 1 offset!!!
-								// RawRecord item = rawRecords.get(id-1);
-								EncryptedFingerprint item = repo.getEncryptedFingerprints().get(id);
-								
-								BigInteger plainFP;
-								try {
-									plainFP = Paillier.Dec(item.getCipherFP(), repo.getKeyF(), csp.getKeyPrivate(repo.getId()));
-									
-									System.out.println(id + " :: " + item.getName() + " :: " + plainFP + " >>> dist: " + Distance.getHammingDistanceV2(rawQuery.getValue(), plainFP));	
-								} catch (Exception e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-							}
-						//}
-					} else {
-						System.out.println("No similar item!!!");
-					}*/
+					// print the statistics
+					System.out.println("The recall is : " + MyAnalysis.computeRecall(rawQuery.getName(), searchResult, rawRecords, numOfPositive));
+					
+					System.out.println("The precision is : " + MyAnalysis.computePrecision(rawQuery.getName(), searchResult, rawRecords));
 				}
-			}
+			} else if (operationType == SysConstant.OPERATION_ANALYZE) {
+				
+				RawRecord rawQuery;
+				
+				long avgSearchTime = 0;
+				
+				float avgRecall = 0;
+				
+				float avgPrecision = 0;
+				
+				int avgNumOfCandidate = 0;
+				
+				int queryTimes = 0;
+				
+				for (int i = 0; i < rawRecords.size(); i++) {
+					
+					rawQuery = rawRecords.get(i);
+					
+					// Only check the image, of which name contains "original"
+					if (rawQuery.getName().contains("original")) {
+						
+						System.out.println(++queryTimes);
+						
+						// prepare the query message
+						List<Element> Q = new ArrayList<Element>(lshL);
+						
 
+						long[] lshVector = lsh.computeLSH(rawQuery.getValue());
+						
+						for (int j = 0; j < lshL; j++) {
+							
+							Element t = params.h1Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
+							
+							Q.add(t);
+						}
+						
+						long time1 = System.currentTimeMillis();
+						
+						Map<Integer, Integer> searchResult = repo.secureSearch(detectorId, Q);
+						
+						long time2 = System.currentTimeMillis();
+
+						avgSearchTime += time2 - time1;
+						
+						avgNumOfCandidate += searchResult.size();
+						
+						avgRecall += MyAnalysis.computeRecall(rawQuery.getName(), searchResult, rawRecords, numOfPositive);
+						
+						avgPrecision += MyAnalysis.computePrecision(rawQuery.getName(), searchResult, rawRecords);
+					}
+				}
+				
+				// print the statistics
+				System.out.println("Average search time is : " + avgSearchTime/(float)queryTimes + " ms");
+				System.out.println("Average candidate size : " + avgNumOfCandidate/(float)queryTimes);
+				
+				
+				System.out.println("Average recall is      : " + avgRecall/queryTimes + " %");
+				System.out.println("Average precision is   : " + avgPrecision/queryTimes + " %");
+			}
 		}
 	}
 

@@ -28,7 +28,7 @@ public class SingleRepoSearchThread extends Thread {
 
 	public void run() {
 
-		System.out.println(getName() + " is running!");
+		//System.out.println(getName() + " is running!");
 		
 		for (Map.Entry<Integer, SecureToken> entry : secureTokensInL.entrySet()) {
 
@@ -43,7 +43,7 @@ public class SingleRepoSearchThread extends Thread {
 			}
 		}
 
-		System.out.println(getName() + " is finished! Number of candidate: " + resultInL.size());
+		//System.out.println(getName() + " is finished! Number of candidate: " + resultInL.size());
 		threadCounter.countDown();
 	}
 }

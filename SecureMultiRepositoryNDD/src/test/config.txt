@@ -1,4 +1,4 @@
-inputPath: /data/copydays_original/
-outputPath: /home/ubuntu/infocom2016/
-outFileName: fingerprint.txt
-numOfLimit: 200
+inputPath: /data/infocom_2016/copydays_jpeg/
+outputPath: /data/infocom_2016/output/
+outFileName: ahash_fp_jpeg_all.txt
+numOfLimit: 2000

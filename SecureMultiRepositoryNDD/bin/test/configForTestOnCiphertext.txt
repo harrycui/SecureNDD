@@ -1,6 +1,6 @@
-inputPath: /home/ubuntu/infocom2016/
-inputFileName: fingerprint.txt
-numOfLimit: 200
+inputPath: /data/infocom_2016/output/
+inputFileName: ahash_fp_crop_all.txt
+numOfLimit: 2000
 numOfRepo: 4
 pairingSettingPath: /home/ubuntu/github/SecureNDD/SecureMultiRepositoryNDD/src/test/d159.properties
 lshL: 5
@@ -11,5 +11,6 @@ certainty: 64
 lshL: 5
 lshDimension: 64
 # the larger K, the more accurate, but the smaller, the more items can be located
-lshK: 12
+lshK: 11
 threshold: 10
+numOfPositive: 10

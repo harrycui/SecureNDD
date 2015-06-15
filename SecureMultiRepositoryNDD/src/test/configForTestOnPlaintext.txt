@@ -1,4 +1,5 @@
-inputPath: /home/ubuntu/infocom2016/
-inputFileName: fingerprint.txt
-numOfLimit: 200
-threshold: 10
+inputPath: /data/infocom_2016/output/
+inputFileName: ahash_fp_crop_all.txt
+numOfLimit: 2000
+threshold: 2
+numOfPositive: 10

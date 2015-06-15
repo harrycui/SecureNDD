@@ -53,6 +53,10 @@ public class AHash implements ImageHashTool {
 		// generate fingerprint in BigInteger format
 		fingerprint.genValue();
 		
+		// TODO: double check this statement
+		dst.release();
+		src.release();
+		
 		return fingerprint;
 	}
 

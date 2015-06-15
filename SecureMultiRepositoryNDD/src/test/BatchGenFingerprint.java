@@ -40,9 +40,9 @@ public class BatchGenFingerprint {
 		String inputPath = config.getString("inputPath");
 		String outputPath = config.getString("outputPath");
 		String outFileName = config.getString("outFileName");
-		int limitNum = config.getInt("limitNum");
+		int numOfLimit = config.getInt("numOfLimit");
 
-		List<String> filesList = new ArrayList<String>(limitNum);
+		List<String> filesList = new ArrayList<String>(numOfLimit);
 
 		File[] files = new File(inputPath).listFiles();
 
@@ -68,8 +68,8 @@ public class BatchGenFingerprint {
 
 		if (filesList.size() > 0) {
 
-			int totalSize = (filesList.size() < limitNum ? filesList.size()
-					: limitNum);
+			int totalSize = (filesList.size() < numOfLimit ? filesList.size()
+					: numOfLimit);
 
 			List<Document> docs = new ArrayList<Document>(totalSize);
 
@@ -92,24 +92,10 @@ public class BatchGenFingerprint {
 			PrintTool.println(PrintTool.OUT, "starting write to file >>> "
 					+ outputPath + outFileName);
 
-			FileTool.writeFingerprint2File("/home/ubuntu/infocom2016/",
-					"fingerprint.txt", docs, false);
+			FileTool.writeFingerprint2File(outputPath,
+					outFileName, docs, false);
 		}
 
 		System.out.println("\nAll done!");
-
-		/*Map<Integer, NameFingerprintPair> fingerprints = FileTool
-				.readFingerprintFromFile(outputPath, outFileName, false);
-
-		for (int i = 0; i < fingerprints.size(); i++) {
-
-			BigInteger bi = fingerprints.get(i + 1).getValue();
-
-			if (bi.longValue() > Long.MAX_VALUE
-					|| bi.longValue() < Long.MIN_VALUE) {
-				System.out.println((i + 1) + "::" + bi);
-			}
-			System.out.println((i + 1) + "::" + bi);
-		}*/
 	}
 }

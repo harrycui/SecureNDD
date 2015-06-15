@@ -25,6 +25,7 @@ public class Image extends Document {
 			hashTool = new AHash();
 		} else if (type == ImageHashTool.HASH_TYPE_P) {
 			
+			// TODO: pHash
 			hashTool = new AHash();
 		} else if (type == ImageHashTool.HASH_FAKE) {
 			
