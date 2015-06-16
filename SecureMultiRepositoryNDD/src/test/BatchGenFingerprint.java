@@ -41,6 +41,7 @@ public class BatchGenFingerprint {
 		String outputPath = config.getString("outputPath");
 		String outFileName = config.getString("outFileName");
 		int numOfLimit = config.getInt("numOfLimit");
+		int hashType = config.getInt("hashType");
 
 		List<String> filesList = new ArrayList<String>(numOfLimit);
 
@@ -79,7 +80,7 @@ public class BatchGenFingerprint {
 
 				Document doc = new Image(i + 1, filesList.get(i), imageData);
 
-				doc.generate(64, ImageHashTool.HASH_TYPE_A);
+				doc.generate(64, hashType);
 
 				docs.add(doc);
 

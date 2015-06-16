@@ -3,6 +3,7 @@ package local;
 import imageHash.AHash;
 import imageHash.FakeHash;
 import imageHash.ImageHashTool;
+import imageHash.PHash;
 
 import org.opencv.core.Mat;
 
@@ -26,7 +27,7 @@ public class Image extends Document {
 		} else if (type == ImageHashTool.HASH_TYPE_P) {
 			
 			// TODO: pHash
-			hashTool = new AHash();
+			hashTool = new PHash();
 		} else if (type == ImageHashTool.HASH_FAKE) {
 			
 			hashTool = new FakeHash();
