@@ -307,6 +307,8 @@ public class PerformanceTest {
 				
 				RawRecord rawQuery;
 				
+				float avgGenTokenTime = 0;
+				
 				long avgSearchTime = 0;
 				
 				float avgRecall = 0;
@@ -326,6 +328,7 @@ public class PerformanceTest {
 						
 						System.out.println(++queryTimes);
 						
+						long stOfGenToken = System.currentTimeMillis();
 						// prepare the query message
 						List<Element> Q = new ArrayList<Element>(lshL);
 						
@@ -339,12 +342,16 @@ public class PerformanceTest {
 							Q.add(t);
 						}
 						
+						long etOfGenToken = System.currentTimeMillis();
+						
 						long time1 = System.currentTimeMillis();
 						
 						Map<Integer, Integer> searchResult = repo.secureSearch(detectorId, Q);
 						
 						long time2 = System.currentTimeMillis();
 
+						avgGenTokenTime += etOfGenToken - stOfGenToken;
+						
 						avgSearchTime += time2 - time1;
 						
 						avgNumOfCandidate += searchResult.size();
@@ -356,12 +363,16 @@ public class PerformanceTest {
 				}
 				
 				// print the statistics
-				System.out.println("Average search time is : " + avgSearchTime/(float)queryTimes + " ms");
-				System.out.println("Average candidate size : " + avgNumOfCandidate/(float)queryTimes);
+				System.out.println("Average recall is        : " + avgRecall/queryTimes*100 + " %");
+				System.out.println("Average precision is     : " + avgPrecision/queryTimes*100 + " %");
 				
 				
-				System.out.println("Average recall is      : " + avgRecall/queryTimes + " %");
-				System.out.println("Average precision is   : " + avgPrecision/queryTimes + " %");
+				System.out.println("\nAverage genToken time is : " + avgGenTokenTime/(float)queryTimes + " ms");
+				System.out.println("Average search time is   : " + avgSearchTime/(float)queryTimes + " ms");
+				System.out.println("Average candidate size   : " + avgNumOfCandidate/queryTimes);
+				
+				
+				
 			}
 		}
 	}

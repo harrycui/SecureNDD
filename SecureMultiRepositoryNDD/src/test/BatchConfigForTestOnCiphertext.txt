@@ -1,6 +1,6 @@
 inputPath: /data/infocom_2016/output/
 inputFileName: phash_fp_jpeg_all.txt
-numOfLimit: 2000
+numOfLimit: 100
 numOfRepo: 4
 pairingSettingPath: /home/ubuntu/github/SecureNDD/SecureMultiRepositoryNDD/src/test/d159.properties
 # parameters for Paillier
