@@ -2,6 +2,7 @@ package base;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import cloud.RawRecord;
 
@@ -56,5 +57,60 @@ public class MyAnalysis {
 		String name2 = testName.substring(testName.lastIndexOf("_"), testName.lastIndexOf("."));
 		
 		return (name1.equals(name2));
+	}
+	
+	public static float computeTopK(RawRecord query,
+			List<Entry<Integer, Integer>> rankedList, List<RawRecord> rawRecords,
+			int epsilon) {
+
+		int numOfTruePositive = 0;
+		// int numOfPositive = 0;
+		
+		for (Entry<Integer, Integer> entry : rankedList) {
+		
+			//System.out.print(query.getName() + " = " + rawRecords.get(entry.getKey()-1).getName() + " :: dist = ");
+			if (checkDistance(query, rawRecords.get(entry.getKey()-1), epsilon)) {
+				numOfTruePositive++;
+			}
+		}
+		
+		// in case rankedList is empty
+		if(rankedList.size() == 0)
+			return 1;
+
+		return (float) numOfTruePositive/rankedList.size();
+	}
+	
+	public static int computeCDF(RawRecord query,
+			List<Entry<Integer, Integer>> rankedList, List<RawRecord> rawRecords,
+			int epsilon, int numOfRetrieval) 
+	{
+		int numOfTruePositive = 0;
+		
+		int cntCompare = 0; // counter for comparing until finding numOfRetrieval TP results
+		
+		for (Entry<Integer, Integer> entry : rankedList) 
+		{	
+			if(numOfTruePositive == numOfRetrieval)
+				break;
+			
+			if (checkDistance(query, rawRecords.get(entry.getKey()-1), epsilon)) 
+			{
+				numOfTruePositive++;
+			}
+			++cntCompare;
+			
+		}
+		return cntCompare;
+		
+	}
+	
+	public static boolean checkDistance(RawRecord query, RawRecord candidate, int epsilon) {
+
+		int dist = Distance.getHammingDistanceV2(query.getValue(), candidate.getValue());
+
+		//System.out.println(dist);
+		
+		return (dist <= epsilon);
 	}
 }

@@ -1,6 +1,6 @@
-inputPath: /data/infocom_2016/copydays_crop/
+inputPath: /data/infocom_2016/original/
 outputPath: /data/infocom_2016/output/
-outFileName: phash_fp_crop_all.txt
-numOfLimit: 2000
+outFileName: phash_fp_jpeg_query.txt
+numOfLimit: 20000
 #aHash: 1  pHash: 2
 hashType: 2

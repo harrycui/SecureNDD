@@ -194,7 +194,7 @@ public class BatchPerformanceTest {
 					rawQuery = rawRecords.get(i);
 					
 					// Only check the image, of which name contains "original"
-					if (rawQuery.getName().contains("original")) {
+					if (rawQuery.getName().contains("original") && !rawQuery.getName().contains("scale")) {
 						
 						System.out.println(++queryTimes);
 						

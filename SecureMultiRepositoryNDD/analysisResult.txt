@@ -1,0 +1,197 @@
+
+-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+INFOCOM 2016 Experiment - batch test:
+
+	l = 5 	k = 5
+
+		Insert time: 7633 ms
+
+		Average recall is        : 17.500002 %
+		Average precision is     : 6.325198 %
+
+		Average genToken time is : 12.625 ms
+		Average search time is   : 119.5 ms
+		Average candidate size   : 50
+-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+INFOCOM 2016 Experiment - batch test:
+
+	l = 5 	k = 6
+
+		Insert time: 7528 ms
+
+		Average recall is        : 17.500002 %
+		Average precision is     : 11.414944 %
+
+		Average genToken time is : 13.375 ms
+		Average search time is   : 113.0 ms
+		Average candidate size   : 31
+-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+INFOCOM 2016 Experiment - batch test:
+
+	l = 5 	k = 7
+
+		Insert time: 5342 ms
+
+		Average recall is        : 17.500002 %
+		Average precision is     : 24.136711 %
+
+		Average genToken time is : 13.5 ms
+		Average search time is   : 108.875 ms
+		Average candidate size   : 22
+-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+INFOCOM 2016 Experiment - batch test:
+
+	l = 5 	k = 8
+
+		Insert time: 5945 ms
+
+		Average recall is        : 17.500002 %
+		Average precision is     : 26.280752 %
+
+		Average genToken time is : 14.0 ms
+		Average search time is   : 117.375 ms
+		Average candidate size   : 17
+-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+INFOCOM 2016 Experiment - batch test:
+
+	l = 5 	k = 9
+
+		Insert time: 7043 ms
+
+		Average recall is        : 17.500002 %
+		Average precision is     : 32.49495 %
+
+		Average genToken time is : 13.25 ms
+		Average search time is   : 118.125 ms
+		Average candidate size   : 18
+-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+INFOCOM 2016 Experiment - batch test:
+
+	l = 5 	k = 10
+
+		Insert time: 5563 ms
+
+		Average recall is        : 17.500002 %
+		Average precision is     : 29.796785 %
+
+		Average genToken time is : 13.125 ms
+		Average search time is   : 107.625 ms
+		Average candidate size   : 17
+-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+INFOCOM 2016 Experiment - batch test:
+
+	l = 5 	k = 11
+
+		Insert time: 5568 ms
+
+		Average recall is        : 17.500002 %
+		Average precision is     : 50.319992 %
+
+		Average genToken time is : 13.375 ms
+		Average search time is   : 108.0 ms
+		Average candidate size   : 16
+-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+INFOCOM 2016 Experiment - batch test:
+
+	l = 5 	k = 12
+
+		Insert time: 5756 ms
+
+		Average recall is        : 17.500002 %
+		Average precision is     : 61.022724 %
+
+		Average genToken time is : 13.0 ms
+		Average search time is   : 106.25 ms
+		Average candidate size   : 9
+-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+INFOCOM 2016 Experiment - batch test:
+
+	l = 5 	k = 13
+
+		Insert time: 5912 ms
+
+		Average recall is        : 17.500002 %
+		Average precision is     : 66.43518 %
+
+		Average genToken time is : 13.125 ms
+		Average search time is   : 105.0 ms
+		Average candidate size   : 6
+-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+INFOCOM 2016 Experiment - batch test:
+
+	l = 5 	k = 14
+
+		Insert time: 6064 ms
+
+		Average recall is        : 17.500002 %
+		Average precision is     : 64.948235 %
+
+		Average genToken time is : 13.0 ms
+		Average search time is   : 130.0 ms
+		Average candidate size   : 5
+-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+INFOCOM 2016 Experiment - batch test:
+
+	l = 5 	k = 15
+
+		Insert time: 6000 ms
+
+		Average recall is        : 17.500002 %
+		Average precision is     : 80.625 %
+
+		Average genToken time is : 14.5 ms
+		Average search time is   : 140.0 ms
+		Average candidate size   : 4
+-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+INFOCOM 2016 Experiment - batch test:
+
+	l = 5 	k = 16
+
+		Insert time: 5951 ms
+
+		Average recall is        : 17.500002 %
+		Average precision is     : 77.281746 %
+
+		Average genToken time is : 12.5 ms
+		Average search time is   : 106.375 ms
+		Average candidate size   : 5
+-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+INFOCOM 2016 Experiment - batch test:
+
+	l = 5 	k = 17
+
+		Insert time: 5597 ms
+
+		Average recall is        : 17.500002 %
+		Average precision is     : 66.111115 %
+
+		Average genToken time is : 13.0 ms
+		Average search time is   : 107.125 ms
+		Average candidate size   : 6
+-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+INFOCOM 2016 Experiment - batch test:
+
+	l = 5 	k = 18
+
+		Insert time: 6170 ms
+
+		Average recall is        : 17.500002 %
+		Average precision is     : 67.170135 %
+
+		Average genToken time is : 14.625 ms
+		Average search time is   : 119.125 ms
+		Average candidate size   : 6
