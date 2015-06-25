@@ -5,12 +5,12 @@ public class SecureToken {
 
 	private String r;
 	
-	private long c;
+	private long h;
 
-	public SecureToken(String r, long c) {
+	public SecureToken(String r, long h) {
 		
 		this.r = r;
-		this.c = c;
+		this.h = h;
 	}
 
 	public String getR() {
@@ -21,11 +21,11 @@ public class SecureToken {
 		this.r = r;
 	}
 
-	public long getC() {
-		return c;
+	public long getH() {
+		return h;
 	}
 
-	public void setC(long c) {
-		this.c = c;
+	public void setH(long h) {
+		this.h = h;
 	}
 }

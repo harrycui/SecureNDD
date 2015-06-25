@@ -1,14 +1,15 @@
-package cloud;
+package cloudV2;
 
 import it.unisa.dia.gas.jpbc.Element;
 
 import java.math.BigInteger;
 import java.util.Map;
 
+import cloud.MyCountDown;
 import secure.PRF;
 import base.Parameters;
 
-public class SingleRepoInsertThread extends Thread {
+public class SingleRepoInsertThreadV2 extends Thread {
 
 	private MyCountDown threadCounter;
 
@@ -17,13 +18,15 @@ public class SingleRepoInsertThread extends Thread {
 
 	private Parameters params;
 
-	private Map<Integer, SecureToken> secureTokensInL;
+	private Map<Long,Integer> secureTokensInL;
+	
+	private Map<String,Integer> assistMapsInL;
 
 	private Map<Integer, Long> lshValuesInL;
 
-	public SingleRepoInsertThread(String threadName, MyCountDown threadCounter,
+	public SingleRepoInsertThreadV2(String threadName, MyCountDown threadCounter,
 			Element keyV, Map<Integer, Long> lshValuesInL,
-			Map<Integer, SecureToken> secureTokensInL, Parameters params) {
+			Map<Long,Integer> secureTokensInL, Map<String,Integer> assistMapsInL, Parameters params) {
 
 		super(threadName);
 
@@ -32,6 +35,7 @@ public class SingleRepoInsertThread extends Thread {
 
 		this.keyV = keyV;
 		this.lshValuesInL = lshValuesInL;
+		this.assistMapsInL = assistMapsInL;
 		this.secureTokensInL = secureTokensInL;
 	}
 
@@ -45,30 +49,28 @@ public class SingleRepoInsertThread extends Thread {
 			long lshValue = entry.getValue();
 
 			// Step 1: encrypt each LSH value
-			Element r = params.pairing.getGT().newRandomElement()
-					.getImmutable();
-
-			String strR = r.toString();
-
-			// System.out.println(strR);
-
 			// pairing + H1()
-			String t = (params.pairing.pairing(
+			String at = (params.pairing.pairing(
 					params.h1Pre.pow(BigInteger.valueOf(lshValue)), params.g2))
 					.powZn(this.keyV).toString();
-
-			// System.out.println(t);
+			
+			int r = 1;
+			
+			if (assistMapsInL.containsKey(at)) {
+				r = assistMapsInL.get(at);
+				++r;
+			} else {
+				r = 1;
+			}
+			
+			assistMapsInL.put(at, r);
 
 			// H2()
-			long h = PRF.HMACSHA1ToUnsignedInt(t, strR);
-
-			// System.out.println("c = " + c);
-
-			SecureToken seT = new SecureToken(strR, h);
+			long h = PRF.HMACSHA1ToUnsignedInt(at, Integer.toString(r));
 
 			// Step 2: insert to the dict
 
-			this.secureTokensInL.put(rdId, seT);
+			this.secureTokensInL.put(h, rdId);
 		}
 
 		System.out.println(getName() + " is finished!");

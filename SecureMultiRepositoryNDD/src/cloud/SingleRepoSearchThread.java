@@ -37,7 +37,7 @@ public class SingleRepoSearchThread extends Thread {
 			
 			long c = PRF.HMACSHA1ToUnsignedInt(adjustedQueryInL, secureToken.getR());
 			
-			if (secureToken.getC() == c) {
+			if (secureToken.getH() == c) {
 				
 				resultInL.add(rdId);
 			}

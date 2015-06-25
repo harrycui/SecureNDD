@@ -1,4 +1,10 @@
-package cloud;
+/*
+ * Modified by CHU Yilei on 2015 June 25:
+ * Original Map<id,encrypted c> becomes Map<h,fileId>. Here index h comes from <r,t> where r is the updating counter for t.
+ * The input is not "a list at once" but "one t a time"
+ */
+
+package cloudV2;
 
 import it.unisa.dia.gas.jpbc.Element;
 
@@ -7,11 +13,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import cloud.EncryptedFingerprint;
+import cloud.MyCountDown;
+import cloud.SecureRecord;
+import cloud.SecureToken;
+import cloud.SingleRepoSearchThread;
 import secure.PRF;
 import secure.PaillierPublicKey;
 import base.Parameters;
 
-public class Repository {
+public class RepositoryWithIndex {
 
 	private int id;
 
@@ -25,19 +36,22 @@ public class Repository {
 	
 	//private List<SecureRecord> secureRecords;
 	// In this version, each "l" is grouped together (in one Map), secureRecords.size() = l
-	private List<Map<Integer, SecureToken>> secureRecords;
+	private List<Map<Long,Integer>> secureRecords;
 	
 	private Map<Integer, Element> deltas;
 	
-	//private Map<Integer, NameFingerprintPair> rawRecord;
-	
 	private Map<Integer, EncryptedFingerprint> encryptedFingerprints;
 	
-	public Repository() {
+	/*
+	 * frequency counter 
+	 */
+	private List<Map<String,Integer>> assistMaps;
+	
+	public RepositoryWithIndex() {
 		
 	}
 	
-	public Repository(int id, Parameters params, Element keyV, PaillierPublicKey keyF) {
+	public RepositoryWithIndex(int id, Parameters params, Element keyV, PaillierPublicKey keyF) {
 		
 		this.id = id;
 		this.params = new Parameters(params);
@@ -47,20 +61,21 @@ public class Repository {
 		
 		this.keyF = keyF;
 		
-		this.secureRecords = new ArrayList<Map<Integer, SecureToken>>(params.lshL);
+		this.secureRecords = new ArrayList<Map<Long,Integer>>(params.lshL);
+		this.assistMaps = new ArrayList<Map<String,Integer>>(params.lshL);
 		
 		for (int i = 0; i < params.lshL; i++) {
-			this.secureRecords.add(new HashMap<Integer, SecureToken>());
+			this.secureRecords.add(new HashMap<Long,Integer>());
+			this.assistMaps.add(new HashMap<String,Integer>());
 		}
 		
 		this.deltas = new HashMap<Integer, Element>();
 		this.encryptedFingerprints = new HashMap<Integer, EncryptedFingerprint>();
-		//this.rawRecord = new HashMap<Integer, NameFingerprintPair>();
 	}
 	
 	/**
 	 * Authorize a legal user
-	 * 
+	 * frequency
 	 * @param id
 	 */
 	public void addDelta(int id, Element delta) {
@@ -68,18 +83,18 @@ public class Repository {
 		this.deltas.put(id, delta);
 	}
 	
-	/**
-	 * insert secure record
-	 * 
-	 * @param secureRecord
-	 */
-	public void insert(Map<Integer, SecureToken> mapOfL, int id, SecureToken token) {
-		
-		//this.secureRecords.add(secureRecord);
-		mapOfL.put(id, token);
-	}
+//	/**
+//	 * insert secure record
+//	 * 
+//	 * @param secureRecord
+//	 */
+//	public void insert(Map<Integer, SecureToken> mapOfL, int id, SecureToken token) {
+//		
+//		//this.secureRecords.add(secureRecord);
+//		mapOfL.put(id, token);
+//	}
 	
-	
+
 	public Map<Integer, Integer> secureSearch(int uid, List<Element> tArray) {
 		
 		Map<Integer, Integer> searchResult = new HashMap<Integer, Integer>();
@@ -93,12 +108,12 @@ public class Repository {
 			
 			Element delta = this.deltas.get(uid);
 			
-			String[] adjustedQuery = new String[tArray.size()];
+			String[] at = new String[tArray.size()];
 			
 			// adjust the query tokens
 			for (int i = 0; i < tArray.size(); i++) {
 				
-				adjustedQuery[i] = params.pairing.pairing(tArray.get(i), delta)
+				at[i] = params.pairing.pairing(tArray.get(i), delta)
 				.toString();
 			}
 			
@@ -115,7 +130,7 @@ public class Repository {
 	        MyCountDown threadCounter2 = new MyCountDown(this.params.lshL);
 	        for (int i = 0; i < this.params.lshL; i++) {
 	        	
-	        	SingleRepoSearchThread t = new SingleRepoSearchThread("Thread " + i, threadCounter2, adjustedQuery[i], secureRecords.get(i), tempResults.get(i));
+	        	SingleRepoSearchThreadV2 t = new SingleRepoSearchThreadV2("Thread " + i, threadCounter2, at[i], secureRecords.get(i), assistMaps.get(i), tempResults.get(i));
 
 	            t.start();
 	        }
@@ -158,9 +173,9 @@ public class Repository {
 			
 			String at = params.pairing.pairing(query.get(i), delta).toString();
 			
-			long c = PRF.HMACSHA1ToUnsignedInt(at, tokens.get(i).getR());
+			long h = PRF.HMACSHA1ToUnsignedInt(at, tokens.get(i).getR());
 			
-			if (tokens.get(i).getH() == c) {
+			if (tokens.get(i).getH() == h) {
 				result = true;
 				break;
 			}
@@ -219,11 +234,24 @@ public class Repository {
 		this.keyF = keyF;
 	}
 
-	public List<Map<Integer, SecureToken>> getSecureRecords() {
+
+	/*
+	 * 2015 06 25
+	 */
+		
+	public List<Map<Long,Integer>> getSecureRecords() {
 		return secureRecords;
 	}
 
-	public void setSecureRecords(List<Map<Integer, SecureToken>> secureRecords) {
+	public void setSecureRecords(List<Map<Long,Integer>> secureRecords) {
 		this.secureRecords = secureRecords;
+	}
+
+	public List<Map<String, Integer>> getAssistMaps() {
+		return assistMaps;
+	}
+
+	public void setAssistMaps(List<Map<String, Integer>> assistMaps) {
+		this.assistMaps = assistMaps;
 	}
 }
