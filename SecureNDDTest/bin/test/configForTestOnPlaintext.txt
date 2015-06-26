@@ -1,0 +1,5 @@
+inputPath: /data/infocom_2016/output/
+inputFileName: phash_fp_crop_all.txt
+numOfLimit: 2000
+threshold: 39
+numOfPositive: 10

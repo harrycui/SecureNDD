@@ -1,0 +1,3 @@
+inputPath: /data/infocom_2016/jpeg/
+outputPath: /data/infocom_2016/scale/
+numOfLimit: 10000
