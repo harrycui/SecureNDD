@@ -3,30 +3,36 @@ package cloudV2;
 import it.unisa.dia.gas.jpbc.Element;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.Map;
 
 import cloud.MyCountDown;
 import secure.PRF;
+import secure.AESCoder;
 import base.Parameters;
 
 public class SingleRepoInsertThreadV2 extends Thread {
 
 	private MyCountDown threadCounter;
-
-	//private Repository repo;
+	
 	private Element keyV;
 
 	private Parameters params;
 
-	private Map<Long,Integer> secureTokensInL;
+	private Map<Long,Integer> hIndexInL;
 	
-	private Map<String,Integer> assistMapsInL;
+	private Map<String,String> aIndexInL;
+	
+	// this is used to map the "at" and "at'"
+	private Map<String,String> tmpAtMap;
+	
+	private Map<String,Integer> tmpRMap;
 
 	private Map<Integer, Long> lshValuesInL;
 
 	public SingleRepoInsertThreadV2(String threadName, MyCountDown threadCounter,
 			Element keyV, Map<Integer, Long> lshValuesInL,
-			Map<Long,Integer> secureTokensInL, Map<String,Integer> assistMapsInL, Parameters params) {
+			Map<Long,Integer> hIndexInL, Map<String,String> aIndexInL, Parameters params) {
 
 		super(threadName);
 
@@ -35,8 +41,11 @@ public class SingleRepoInsertThreadV2 extends Thread {
 
 		this.keyV = keyV;
 		this.lshValuesInL = lshValuesInL;
-		this.assistMapsInL = assistMapsInL;
-		this.secureTokensInL = secureTokensInL;
+		this.aIndexInL = aIndexInL;
+		this.hIndexInL = hIndexInL;
+		
+		this.tmpAtMap = new HashMap<String, String>();
+		this.tmpRMap = new HashMap<String,Integer>();
 	}
 
 	public void run() {
@@ -54,10 +63,14 @@ public class SingleRepoInsertThreadV2 extends Thread {
 					params.h1Pre.pow(BigInteger.valueOf(lshValue)), params.g2))
 					.powZn(this.keyV).toString();
 			
+			String at2 = (params.pairing.pairing(
+					params.h11Pre.pow(BigInteger.valueOf(lshValue)), params.g2))
+					.powZn(this.keyV).toString();
+			
 			int r = 1;
 			
-			if (assistMapsInL.containsKey(at)) {
-				r = assistMapsInL.get(at);
+			if (aIndexInL.containsKey(at)) {
+				r = tmpRMap.get(at);
 				++r;
 			} else {
 				r = 1;
@@ -69,14 +82,33 @@ public class SingleRepoInsertThreadV2 extends Thread {
 			long h = PRF.HMACSHA1ToUnsignedInt(at, Integer.toString(r));
 
 			// Step 2: insert to the dict
-			while (secureTokensInL.containsKey(h)) {
+			while (hIndexInL.containsKey(h)) {
 				++r;
 				h = PRF.HMACSHA1ToUnsignedInt(at, Integer.toString(r));
 			}
 			
-			assistMapsInL.put(at, r);
+			tmpAtMap.put(at, at2);
 			
-			secureTokensInL.put(h, rdId);
+			tmpRMap.put(at, r);
+			
+			hIndexInL.put(h, rdId);
+		}
+		
+		for (Map.Entry<String, Integer> entry : tmpRMap.entrySet()) {
+
+			String at = entry.getKey();
+			Integer rMax = entry.getValue();
+			
+			String at2 = tmpAtMap.get(at);
+			
+			try {
+				String rCipher = AESCoder.encrypt(rMax.toString().getBytes(), AESCoder.toKey(PRF.SHA256(at2, 64).getBytes())).toString();
+				
+				aIndexInL.put(at, rCipher);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 		System.out.println(getName() + " is finished!");

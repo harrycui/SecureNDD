@@ -31,6 +31,7 @@ import cloud.MyCountDown;
 import cloud.RawRecord;
 import cloud.Repository;
 import cloud.SingleRepoInsertThread;
+import cloudV2.IndexedToken;
 import cloudV2.RepositoryWithIndex;
 import cloudV2.SingleRepoInsertThreadV2;
 
@@ -140,7 +141,7 @@ public class PerformanceTestIndex {
 
         for (int i = 0; i < lshL; i++) {
 
-        	SingleRepoInsertThreadV2 t = new SingleRepoInsertThreadV2("Thread " + i, threadCounter, repo.getKeyV(), lshVectors.get(i), repo.getSecureRecords().get(i), repo.getAssistMaps().get(i), params);
+        	SingleRepoInsertThreadV2 t = new SingleRepoInsertThreadV2("Thread " + i, threadCounter, repo.getKeyV(), lshVectors.get(i), repo.getHIndices().get(i), repo.getAIndices().get(i), params);
 
             t.start();
         }
@@ -263,16 +264,18 @@ public class PerformanceTestIndex {
 					long stOfGenQuery = System.currentTimeMillis();
 					
 					// prepare the query message
-					List<Element> Q = new ArrayList<Element>(lshL);
+					List<IndexedToken> Q = new ArrayList<IndexedToken>(lshL);
 					
 
 					long[] lshVector = lsh.computeLSH(queryRecord.getValue());
 					
 					for (int i = 0; i < lshL; i++) {
 						
-						Element t = params.h1Pre.pow(BigInteger.valueOf(lshVector[i])).powZn(csp.getKeyV(detectorId));
+						Element t1 = params.h1Pre.pow(BigInteger.valueOf(lshVector[i])).powZn(csp.getKeyV(detectorId));
 						
-						Q.add(t);
+						Element t2 = params.h11Pre.pow(BigInteger.valueOf(lshVector[i])).powZn(csp.getKeyV(detectorId));
+						
+						Q.add(new IndexedToken(t1, t2));
 					}
 					
 					long etOfGenQuery = System.currentTimeMillis();
@@ -349,16 +352,18 @@ public class PerformanceTestIndex {
 					
 					long stOfGenToken = System.currentTimeMillis();
 					// prepare the query message
-					List<Element> Q = new ArrayList<Element>(lshL);
+					List<IndexedToken> Q = new ArrayList<IndexedToken>(lshL);
 					
 
 					long[] lshVector = lsh.computeLSH(queryRecord.getValue());
 					
 					for (int j = 0; j < lshL; j++) {
 						
-						Element t = params.h1Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
+						Element t1 = params.h1Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
 						
-						Q.add(t);
+						Element t2 = params.h11Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
+						
+						Q.add(new IndexedToken(t1, t2));
 					}
 					
 					long etOfGenToken = System.currentTimeMillis();
@@ -422,16 +427,18 @@ public class PerformanceTestIndex {
 					
 					long stOfGenToken = System.currentTimeMillis();
 					// prepare the query message
-					List<Element> Q = new ArrayList<Element>(lshL);
+					List<IndexedToken> Q = new ArrayList<IndexedToken>(lshL);
 					
 
 					long[] lshVector = lsh.computeLSH(queryRecord.getValue());
 					
 					for (int j = 0; j < lshL; j++) {
 						
-						Element t = params.h1Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
+						Element t1 = params.h1Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
 						
-						Q.add(t);
+						Element t2 = params.h11Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
+						
+						Q.add(new IndexedToken(t1, t2));
 					}
 					
 					long etOfGenToken = System.currentTimeMillis();
@@ -513,15 +520,18 @@ public class PerformanceTestIndex {
 					++queryTimes;
 					
 					// prepare the query message
-					List<Element> Q = new ArrayList<Element>(lshL);
+					List<IndexedToken> Q = new ArrayList<IndexedToken>(lshL);
 					
+
 					long[] lshVector = lsh.computeLSH(queryRecord.getValue());
 					
 					for (int j = 0; j < lshL; j++) {
 						
-						Element t = params.h1Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
+						Element t1 = params.h1Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
 						
-						Q.add(t);
+						Element t2 = params.h11Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
+						
+						Q.add(new IndexedToken(t1, t2));
 					}
 					
 					Map<Integer, Integer> searchResult = repo.secureSearch(detectorId, Q);

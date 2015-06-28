@@ -10,6 +10,11 @@ public class Parameters {
 	public Pairing pairing;
 	public Element h1;
 	public ElementPowPreProcessing h1Pre;
+	
+	// used to simulate H1'
+	public Element h11;
+	public ElementPowPreProcessing h11Pre;
+	
 	//public Element h2;
 	public Element g1;
 	public Element g2;
@@ -36,6 +41,10 @@ public class Parameters {
 		this.h1 = pairing.getG1().newRandomElement().getImmutable();
 		
 		this.h1Pre = h1.getElementPowPreProcessing();
+		
+		this.h11 = pairing.getG1().newRandomElement().getImmutable();
+		
+		this.h11Pre = h11.getElementPowPreProcessing();
 
 		//this.h2 = pairing.getG2().newRandomElement().getImmutable();
 
@@ -63,10 +72,14 @@ public class Parameters {
 
 		this.pairing = params.pairing;
 
-		// constant element of H1, H2 function
+		// constant element of H1, H1' function
 		this.h1 = params.h1.duplicate();
 		
 		this.h1Pre = this.h1.getElementPowPreProcessing();
+		
+		this.h11 = params.h11.duplicate();
+		
+		this.h11Pre = this.h11.getElementPowPreProcessing();
 
 		//this.h2 = params.h2.duplicate();
 

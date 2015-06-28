@@ -3,7 +3,7 @@ inputFileName= ahash_fp_jpeg.txt
 queryFileName= ahash_fp_jpeg_query.txt
 numOfLimit= 20000
 numOfRepo= 4
-pairingSettingPath= D:\\workspace2\\SecureNDD\\src\\test\\d159.properties
+pairingSettingPath= D:\workspace2\SecureNDDTest\src\test\d159.properties
 # parameters for Paillier
 bitLength= 512
 certainty= 64

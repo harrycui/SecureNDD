@@ -36,16 +36,18 @@ public class RepositoryWithIndex {
 	
 	//private List<SecureRecord> secureRecords;
 	// In this version, each "l" is grouped together (in one Map), secureRecords.size() = l
-	private List<Map<Long,Integer>> secureRecords;
+	private List<Map<Long,Integer>> hIndices;
 	
 	private Map<Integer, Element> deltas;
 	
 	private Map<Integer, EncryptedFingerprint> encryptedFingerprints;
 	
+	private List<Map<String, List<Integer>>> invertedIndices;
+	
 	/*
 	 * frequency counter 
 	 */
-	private List<Map<String,Integer>> assistMaps;
+	private List<Map<String,String>> aIndices;
 	
 	public RepositoryWithIndex() {
 		
@@ -61,12 +63,14 @@ public class RepositoryWithIndex {
 		
 		this.keyF = keyF;
 		
-		this.secureRecords = new ArrayList<Map<Long,Integer>>(params.lshL);
-		this.assistMaps = new ArrayList<Map<String,Integer>>(params.lshL);
+		this.hIndices = new ArrayList<Map<Long,Integer>>(params.lshL);
+		this.aIndices = new ArrayList<Map<String,String>>(params.lshL);
+		this.invertedIndices = new ArrayList<Map<String, List<Integer>>>(params.lshL);
 		
 		for (int i = 0; i < params.lshL; i++) {
-			this.secureRecords.add(new HashMap<Long,Integer>());
-			this.assistMaps.add(new HashMap<String,Integer>());
+			this.hIndices.add(new HashMap<Long,Integer>());
+			this.aIndices.add(new HashMap<String,String>());
+			this.invertedIndices.add(new HashMap<String, List<Integer>>());
 		}
 		
 		this.deltas = new HashMap<Integer, Element>();
@@ -95,7 +99,7 @@ public class RepositoryWithIndex {
 //	}
 	
 
-	public Map<Integer, Integer> secureSearch(int uid, List<Element> tArray) {
+	public Map<Integer, Integer> secureSearch(int uid, List<IndexedToken> tArray) {
 		
 		Map<Integer, Integer> searchResult = new HashMap<Integer, Integer>();
 		
@@ -108,13 +112,17 @@ public class RepositoryWithIndex {
 			
 			Element delta = this.deltas.get(uid);
 			
-			String[] at = new String[tArray.size()];
+			String[] ats1 = new String[tArray.size()];
+			String[] ats2 = new String[tArray.size()];
 			
 			// adjust the query tokens
 			for (int i = 0; i < tArray.size(); i++) {
 				
-				at[i] = params.pairing.pairing(tArray.get(i), delta)
+				ats1[i] = params.pairing.pairing(tArray.get(i).getT1(), delta)
 				.toString();
+				
+				ats2[i] = params.pairing.pairing(tArray.get(i).getT2(), delta)
+						.toString();
 			}
 			
 			// linear scan the secure tokens in repo
@@ -130,9 +138,14 @@ public class RepositoryWithIndex {
 	        MyCountDown threadCounter2 = new MyCountDown(this.params.lshL);
 	        for (int i = 0; i < this.params.lshL; i++) {
 	        	
-	        	SingleRepoSearchThreadV2 t = new SingleRepoSearchThreadV2("Thread " + i, threadCounter2, at[i], secureRecords.get(i), assistMaps.get(i), tempResults.get(i));
+	        	if (invertedIndices.get(i).containsKey(ats1[i])) {
+	        		tempResults.get(i).addAll(invertedIndices.get(i).get(ats1[i]));
+				} else {
+	        	
+					SingleRepoSearchThreadV2 t = new SingleRepoSearchThreadV2("Thread " + i, threadCounter2, ats1[i], ats2[i], hIndices.get(i), aIndices.get(i), tempResults.get(i), invertedIndices.get(i));
 
-	            t.start();
+					t.start();
+				}
 	        }
 
 	        // wait for all threads done
@@ -143,6 +156,10 @@ public class RepositoryWithIndex {
 			
 			
 			for (int i = 0; i < this.params.lshL; i++) {
+				
+				if (!invertedIndices.get(i).containsKey(ats1[i])) {
+					invertedIndices.get(i).put(ats1[i], tempResults.get(i));
+				}
 				
 				for (int j = 0; j < tempResults.get(i).size(); j++) {
 					
@@ -234,24 +251,19 @@ public class RepositoryWithIndex {
 		this.keyF = keyF;
 	}
 
-
-	/*
-	 * 2015 06 25
-	 */
-		
-	public List<Map<Long,Integer>> getSecureRecords() {
-		return secureRecords;
+	public List<Map<Long, Integer>> getHIndices() {
+		return hIndices;
 	}
 
-	public void setSecureRecords(List<Map<Long,Integer>> secureRecords) {
-		this.secureRecords = secureRecords;
+	public void setHIndices(List<Map<Long, Integer>> hIndices) {
+		this.hIndices = hIndices;
 	}
 
-	public List<Map<String, Integer>> getAssistMaps() {
-		return assistMaps;
+	public List<Map<String, String>> getAIndices() {
+		return aIndices;
 	}
 
-	public void setAssistMaps(List<Map<String, Integer>> assistMaps) {
-		this.assistMaps = assistMaps;
+	public void setAIndices(List<Map<String, String>> aIndices) {
+		this.aIndices = aIndices;
 	}
 }
