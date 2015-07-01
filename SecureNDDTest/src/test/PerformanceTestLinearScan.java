@@ -65,6 +65,7 @@ public class PerformanceTestLinearScan {
 		String inputPath = config.getString("inputPath");
 		String rawRecordFileName = config.getString("inputFileName");
 		String queryFileName = config.getString("queryFileName");
+
 		int numOfLimit = config.getInt("numOfLimit");
 		
 		// hardcode: set numOfRepo = 1
@@ -99,6 +100,7 @@ public class PerformanceTestLinearScan {
 		List<RawRecord> rawRecords = FileTool.readFingerprintFromFile2ListV2(inputPath, rawRecordFileName, numOfLimit, false);
 		
 		List<RawRecord> queryRecords = FileTool.readFingerprintFromFile2ListV2(inputPath, queryFileName, numOfLimit, false);
+
 		
 		
 		if (numOfLimit > rawRecords.size()) {
@@ -194,16 +196,15 @@ public class PerformanceTestLinearScan {
 					} else if (Integer.parseInt(inputStr) > 5
 							|| Integer.parseInt(inputStr) < 1) {
 
-						System.out
-								.println("Warning: operation type should be limited in [1, 5], please try again!");
+						System.out.println("Warning: operation type should be limited in [1, 5], please try again!");
 
 						continue;
 					} else {
 						operationType = Integer.parseInt(inputStr);
 					}
 				} catch (NumberFormatException e) {
-					System.out
-							.println("Warning: operation type should be limited in [1, 5], please try again!");
+					System.out.println("Warning: operation type should be limited in [1, 5], please try again!");
+
 					continue;
 				}
 
@@ -487,9 +488,9 @@ public class PerformanceTestLinearScan {
 				System.out.println("Average search time is   : " + avgSearchTime/(float)queryTimes + " ms");
 				System.out.println("Average candidate size   : " + avgNumOfCandidate/queryTimes);
 	
+
 			} else if (operationType == SysConstant.OPERATION_ANALYZE_CDF) {
-				
-				RawRecord queryRecord;
+RawRecord queryRecord;
 				
 				float avgRecall = 0;
 								
@@ -570,7 +571,7 @@ public class PerformanceTestLinearScan {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				
+		        
 			} else if (operationType == SysConstant.OPERATION_COUNT_ITEMS) {
 				
 				RawRecord queryRecord;

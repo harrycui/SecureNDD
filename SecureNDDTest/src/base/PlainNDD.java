@@ -26,6 +26,7 @@ public class PlainNDD {
 		
 		return results;
 	}
+
 	
 	public static int[] searchForCount(BigInteger biQ, List<NameFingerprintPair> dataset, int epsilon) {
 		

@@ -248,7 +248,7 @@ public class TestOnPlaintext {
 
 				NameFingerprintPair query;
 
-				int[] numOfItemsInThreshold = new int [threshold+1];
+				int[] numOfItemsInThreshold = new int [threshold];
 
 				int queryTimes = 0;
 
@@ -261,7 +261,7 @@ public class TestOnPlaintext {
 					int[] tmpResult = PlainNDD
 							.searchForCount(query.getValue(), rawRecords, threshold);
 					
-					for (int j = 0; j <= threshold; j++) {
+					for (int j = 0; j < threshold; j++) {
 						
 						numOfItemsInThreshold[j] += tmpResult[j];
 					}
@@ -271,9 +271,9 @@ public class TestOnPlaintext {
 				// print the statistics
 				System.out.println("Average located items' number are:\n");
 				
-				for (int i = 0; i <= threshold; i++) {
+				for (int i = 0; i < threshold; i++) {
 					
-					System.out.println("threshold < " + i + ": " + numOfItemsInThreshold[i]/queryRecords.size());
+					System.out.println("threshold < " + (i + 1) + ": " + numOfItemsInThreshold[i]/queryRecords.size());
 				}
 			}
 
