@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -288,6 +289,8 @@ public class PerformanceTestLinearScan {
 
 					System.out.println("Cost " + (time2 - time1) + " ms.");
 					
+					long avgDecTime = 0;
+					
 					if (searchResult != null && searchResult.size() > 0) {
 						
 						for (Map.Entry<Integer, Integer> entry : searchResult.entrySet()) {
@@ -299,7 +302,14 @@ public class PerformanceTestLinearScan {
 							
 							BigInteger plainFP;
 							try {
+								
+								long stOfDec = System.nanoTime();
+								
 								plainFP = Paillier.Dec(item.getCipherFP(), repo.getKeyF(), csp.getKeyPrivate(repo.getId()));
+								
+								long etOfDec = System.nanoTime();
+								
+								avgDecTime += etOfDec - stOfDec;
 								
 								int dist = Distance.getHammingDistanceV2(queryRecord.getValue(), plainFP);
 								
@@ -315,6 +325,9 @@ public class PerformanceTestLinearScan {
 								e.printStackTrace();
 							}
 						}
+						
+						System.out.println("Avg dec time is:" + (double)avgDecTime/searchResult.size() / 1000000 + " ms.");
+						
 					} else {
 						System.out.println("No similar item!!!");
 					}
@@ -490,7 +503,8 @@ public class PerformanceTestLinearScan {
 	
 
 			} else if (operationType == SysConstant.OPERATION_ANALYZE_CDF) {
-RawRecord queryRecord;
+				
+				RawRecord queryRecord;
 				
 				float avgRecall = 0;
 								
@@ -579,12 +593,18 @@ RawRecord queryRecord;
 				int[] numOfItemsInThreshold = new int [threshold+1];
 
 				int queryTimes = 0;
+				
+				long avgGenQueryTime = 0;
+				
+				long avgSearchTime = 0;
 
 				for (int i = 0; i < queryRecords.size(); i++) {
 
 					queryRecord = queryRecords.get(i);
 					
 					System.out.println(++queryTimes);
+					
+					long stOfGenQuery = System.nanoTime();
 					
 					// prepare the query message
 					List<Element> Q = new ArrayList<Element>(lshL);
@@ -598,7 +618,17 @@ RawRecord queryRecord;
 						Q.add(t);
 					}
 					
+					long etOfGenQuery = System.nanoTime();
+					
+					avgGenQueryTime += etOfGenQuery - stOfGenQuery;
+					
+					long stSearchTime = System.currentTimeMillis();
+					
 					Map<Integer, Integer> searchResult = repo.secureSearch(detectorId, Q);
+					
+					long etSearchTime = System.currentTimeMillis();
+					
+					avgSearchTime += etSearchTime - stSearchTime;
 					
 					int[] tmpResult = new int[threshold+1];
 					
@@ -623,7 +653,9 @@ RawRecord queryRecord;
 					}
 					
 				}
-
+				
+				System.out.println("Avg gen query time is:" + (double)avgGenQueryTime/queryRecords.size() / 1000000 + " ms.");
+				System.out.println("Avg search time is:" + (double)avgSearchTime/queryRecords.size() + " ms.");
 				// print the statistics
 				System.out.println("Average located items' number are:\n");
 				

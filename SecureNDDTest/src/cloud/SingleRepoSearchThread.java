@@ -35,12 +35,18 @@ public class SingleRepoSearchThread extends Thread {
 			Integer rdId = entry.getKey();
 			SecureToken secureToken = entry.getValue();
 			
+			//long stOfMatchingTime = System.nanoTime();
+			
 			long c = PRF.HMACSHA1ToUnsignedInt(adjustedQueryInL, secureToken.getR());
 			
 			if (secureToken.getH() == c) {
 				
 				resultInL.add(rdId);
 			}
+			
+			//long etOfMatchingTime = System.nanoTime();
+			
+			//System.out.println("Matching time is:" + (double)(etOfMatchingTime - stOfMatchingTime) / 1000000 + " ms.");
 		}
 
 		//System.out.println(getName() + " is finished! Number of candidate: " + resultInL.size());
