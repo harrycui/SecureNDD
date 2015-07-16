@@ -33,6 +33,9 @@ public class Repository {
 	
 	private Map<Integer, EncryptedFingerprint> encryptedFingerprints;
 	
+	// added on 16/7/2015
+	private List<Map<String, List<Integer>>> cachedIndex;
+	
 	public Repository() {
 		
 	}
@@ -49,13 +52,20 @@ public class Repository {
 		
 		this.secureRecords = new ArrayList<Map<Integer, SecureToken>>(params.lshL);
 		
+		// added on 16/7/2015
+		this.cachedIndex = new ArrayList<Map<String, List<Integer>>>(params.lshL);
+		
 		for (int i = 0; i < params.lshL; i++) {
 			this.secureRecords.add(new HashMap<Integer, SecureToken>());
+			
+			this.cachedIndex.add(new HashMap<String, List<Integer>>());
 		}
 		
 		this.deltas = new HashMap<Integer, Element>();
 		this.encryptedFingerprints = new HashMap<Integer, EncryptedFingerprint>();
 		//this.rawRecord = new HashMap<Integer, NameFingerprintPair>();
+		
+		
 	}
 	
 	/**
@@ -82,6 +92,11 @@ public class Repository {
 	
 	public Map<Integer, Integer> secureSearch(int uid, List<Element> tArray) {
 		
+		// true = cached, false = miss
+		boolean[] flags = new boolean[this.params.lshL];
+		
+		int numOfSearch = this.params.lshL;
+		
 		Map<Integer, Integer> searchResult = new HashMap<Integer, Integer>();
 		
 		if (!this.deltas.containsKey(uid)) {
@@ -100,34 +115,52 @@ public class Repository {
 				
 				adjustedQuery[i] = params.pairing.pairing(tArray.get(i), delta)
 				.toString();
+				
+				if (cachedIndex.get(i).containsKey(adjustedQuery[i])) {
+					flags[i] = true;
+					numOfSearch--;
+				}
 			}
 			
 			// linear scan the secure tokens in repo
 	        List<List<Integer>> tempResults = new ArrayList<>(this.params.lshL);
 	        
 	        for (int i = 0; i < this.params.lshL; i++) {
-				tempResults.add(new ArrayList<>());
+	        	
+	        	if (flags[i]) {
+	        		tempResults.add(cachedIndex.get(i).get(adjustedQuery[i]));
+				} else {
+					tempResults.add(new ArrayList<>());
+				}
 			}
 	        
 	        
-	        
-	        //multiple threads
-	        MyCountDown threadCounter2 = new MyCountDown(this.params.lshL);
-	        for (int i = 0; i < this.params.lshL; i++) {
-	        	
-	        	SingleRepoSearchThread t = new SingleRepoSearchThread("Thread " + i, threadCounter2, adjustedQuery[i], secureRecords.get(i), tempResults.get(i));
+	        if (numOfSearch > 0) {
+				
+	        	//multiple threads
+		        MyCountDown threadCounter2 = new MyCountDown(numOfSearch);
+		        for (int i = 0; i < this.params.lshL; i++) {
+		        	
+		        	//false = miss
+		        	if (!flags[i]) {
+		        		SingleRepoSearchThread t = new SingleRepoSearchThread("Thread " + i, threadCounter2, adjustedQuery[i], secureRecords.get(i), tempResults.get(i));
 
-	            t.start();
-	        }
+			            t.start();
+					}
+		        }
 
-	        // wait for all threads done
-	        while (true) {
-	            if (!threadCounter2.hasNext())
-	                break;
-	        }
-			
+		        // wait for all threads done
+		        while (true) {
+		            if (!threadCounter2.hasNext())
+		                break;
+		        }
+			}
 			
 			for (int i = 0; i < this.params.lshL; i++) {
+				
+				if (!flags[i]) {
+					cachedIndex.get(i).put(adjustedQuery[i], tempResults.get(i));
+				}
 				
 				for (int j = 0; j < tempResults.get(i).size(); j++) {
 					
@@ -142,6 +175,7 @@ public class Repository {
 				}
 			}
 		}
+		
 		
 		return searchResult;
 	}
