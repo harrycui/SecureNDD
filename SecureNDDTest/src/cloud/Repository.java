@@ -61,9 +61,6 @@ public class Repository {
 		
 		this.deltas = new HashMap<Integer, Element>();
 		this.encryptedFingerprints = new HashMap<Integer, EncryptedFingerprint>();
-		//this.rawRecord = new HashMap<Integer, NameFingerprintPair>();
-		
-		
 	}
 	
 	/**

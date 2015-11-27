@@ -1,15 +1,11 @@
 package test;
 
-import it.unisa.dia.gas.jpbc.Element;
-
-import java.awt.SystemTray;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -18,17 +14,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import secure.Paillier;
-import throughput.TestThread;
-import util.ConfigParser;
-import util.FileTool;
-import util.MyAnalysis;
-import util.MyCounter;
-import util.PrintTool;
 import base.Distance;
 import base.HammingLSH;
 import base.Parameters;
-import base.PlainNDD;
 import base.SysConstant;
 import cloud.CSP;
 import cloud.EncryptedFingerprint;
@@ -36,7 +24,12 @@ import cloud.MyCountDown;
 import cloud.RawRecord;
 import cloud.Repository;
 import cloud.SingleRepoInsertThread;
-import cloud.SingleRepoSearchThread;
+import it.unisa.dia.gas.jpbc.Element;
+import secure.Paillier;
+import util.ConfigParser;
+import util.FileTool;
+import util.MyAnalysis;
+import util.PrintTool;
 
 /**
  * For performance evaluation, we just use one repository and involve the ranking mechanism.
@@ -67,8 +60,8 @@ public class PerformanceTestLinearScan {
 
 		ConfigParser config = new ConfigParser(args[0]);
 
-		String inputPath = config.getString("inputPath");
-		String rawRecordFileName = config.getString("inputFileName");
+		String inputPath = config.getString("inputPath").replace("\\", "/");
+		String dbFileName = config.getString("dbFileName");
 		String queryFileName = config.getString("queryFileName");
 
 		int numOfLimit = config.getInt("numOfLimit");
@@ -91,26 +84,24 @@ public class PerformanceTestLinearScan {
 		
 		CSP csp = new CSP(params);
 		
+		// initialize the lsh functions.
 		HammingLSH lsh = new HammingLSH(lshDimension, lshL, lshK);
 		
-		System.out.println(">>> System parameters have been initialized");
-		System.out.println(">>> Now, reading the raw test data from " + inputPath + rawRecordFileName);
+		System.out.println(">>> System parameters have been initialized.\n");
+		System.out.println(">>> Now, reading the raw db data from " + inputPath + dbFileName);
 		
-		// the first user is the detector, id is from 0?1
+		// the first user is the detector, id is from 1.
 		int detectorId = csp.register();
 		
-		// TODO: read each line at the time of inserting
 		// read file to lines list
-		List<RawRecord> rawRecords = FileTool.readFingerprintFromFile2ListV2(inputPath, rawRecordFileName, numOfLimit, false);
+		List<RawRecord> rawRecords = FileTool.readFingerprintFromFile2ListV2(inputPath, dbFileName, numOfLimit, false);
 		
 		List<RawRecord> queryRecords = FileTool.readFingerprintFromFile2ListV2(inputPath, queryFileName, numOfLimit, false);
 
 		
-		
 		if (numOfLimit > rawRecords.size()) {
 			numOfLimit = rawRecords.size();
 		}
-		
 
 		// Step 2: initialize the repositories and secure insert records
 		System.out.println(">>> There are " + numOfLimit + " records.");
@@ -131,15 +122,15 @@ public class PerformanceTestLinearScan {
 		
 		System.out.println("Avg auth time is:" + (double)(etOfAuth - stOfAuth) / 1000000 + " ms.");
 					
-		// id = 0 is the detector
+		// id = 1 is the detector
 		repo.addDelta(detectorId, delta);
 		
-		System.out.println(">>> Now, start inserting data into repositories...");
+		System.out.println(">>> Now, start adding data into repositories...");
 		
 		long startTimeOfInsert = System.currentTimeMillis();
 		
 		// Compute LSH
-		List<Map<Integer, Long>> lshVectors = computeLSH(rawRecords, params);
+		List<Map<Integer, Long>> lshVectors = batchComputeLSH(rawRecords, params);
 		System.out.println(">> LSH converted.");
 		
 		// Encrypt fingerprints
@@ -223,461 +214,460 @@ public class PerformanceTestLinearScan {
 				e.printStackTrace();
 				continue;
 			}
+			
+			switch (operationType) {
+			case SysConstant.OPERATION_QUERY:
+				queryInCiphertext(queryRecords, rawRecords, detectorId, repo, params, csp, lsh, lshL, threshold);
+				break;
+			case SysConstant.OPERATION_ANALYZE:
+				analyzeInCiphertext(queryRecords, rawRecords, detectorId, repo, params, csp, lsh, lshL, threshold);
+				break;
+			case SysConstant.OPERATION_ANALYZE_TOP_K:
+				analyzeTopKInCiphertext(queryRecords, rawRecords, detectorId, repo, params, csp, lsh, lshL, threshold);
+				break;
+			case SysConstant.OPERATION_ANALYZE_CDF:
+				analyzeCDFInCiphertext(queryRecords, rawRecords, detectorId, repo, params, csp, lsh, lshL, threshold);
+				break;
+			case SysConstant.OPERATION_COUNT_ITEMS:
+				countItemsInCiphertext(queryRecords, rawRecords, detectorId, repo, params, csp, lsh, lshL, threshold);
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	
+	private static void queryInCiphertext(List<RawRecord> queryRecords, List<RawRecord> rawDBRecords, int detectorId, Repository repo, Parameters params, CSP csp, HammingLSH lsh, int lshL, int threshold) {
 
-			if (operationType == SysConstant.OPERATION_QUERY) {
+		System.out.println("\nModel: query.");
+		
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-				System.out.println("\nModel: query.");
+		while (true) {
+			System.out
+					.println("\n\nNow, you can search by input you query id range from [1, "
+							+ queryRecords.size()
+							+ "]: (-1 means return to root menu)");
 
-				while (true) {
+			String queryStr = null;
+			int queryIndex;
+			RawRecord queryRecord;
+			
+			try {
+				queryStr = br.readLine();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			try {
+				if (queryStr == null || queryStr.equals("-1")) {
+
+					System.out.println("Return to root menu!");
+
+					break;
+				} else if (Integer.parseInt(queryStr) > queryRecords
+						.size() || Integer.parseInt(queryStr) <= 0) {
+
 					System.out
-							.println("\n\nNow, you can search by input you query id range from [1, "
-									+ queryRecords.size()
-									+ "]: (-1 means return to root menu)");
+							.println("Warning: query index should be limited in [1, limit]");
 
-					String queryStr = null;
-					int queryIndex;
-					RawRecord queryRecord;
+					continue;
+				} else {
+					queryIndex = Integer.parseInt(queryStr);
 					
+					queryRecord = queryRecords.get(queryIndex-1);
+
+					System.out.println("For query item id : "
+							+ queryRecord.getId() + ", name : " + queryRecord.getName() + ", fingerprint : " + queryRecord.getValue());
+				}
+			} catch (NumberFormatException e) {
+				System.out
+						.println("Warning: query index should be limited in [1, "
+								+ rawDBRecords.size() + "]");
+				continue;
+			}
+
+			long stOfGenQuery = System.currentTimeMillis();
+			
+			// prepare the query message
+			List<Element> tArray = new ArrayList<Element>(lshL);
+			
+
+			long[] lshVector = lsh.computeLSH(queryRecord.getValue());
+			
+			for (int i = 0; i < lshL; i++) {
+				
+				Element t = params.h1Pre.pow(BigInteger.valueOf(lshVector[i])).powZn(csp.getKeyV(detectorId));
+				
+				tArray.add(t);
+			}
+			
+			long etOfGenQuery = System.currentTimeMillis();
+			
+			System.out.println("Time cost of generate query: " + (etOfGenQuery - stOfGenQuery) + " ms.");
+			
+			long time1 = System.currentTimeMillis();
+			
+			Map<Integer, Integer> searchResult = repo.secureSearch(detectorId, tArray);
+			
+			long time2 = System.currentTimeMillis();
+
+			System.out.println("Cost " + (time2 - time1) + " ms.");
+			
+			long avgDecTime = 0;
+			
+			if (searchResult != null && searchResult.size() > 0) {
+				
+				for (Map.Entry<Integer, Integer> entry : searchResult.entrySet()) {
+
+					int id = entry.getKey();
+					int counter = entry.getValue();
+					
+					EncryptedFingerprint item = repo.getEncryptedFingerprints().get(id);
+					
+					BigInteger plainFP;
 					try {
-						queryStr = br.readLine();
-					} catch (IOException e) {
+						
+						long stOfDec = System.nanoTime();
+						
+						plainFP = Paillier.Dec(item.getCipherFP(), repo.getKeyF(), csp.getKeyPrivate(repo.getId()));
+						
+						long etOfDec = System.nanoTime();
+						
+						avgDecTime += etOfDec - stOfDec;
+						
+						int dist = Distance.getHammingDistanceV2(queryRecord.getValue(), plainFP);
+						
+						if (dist > threshold) {
+							
+							continue;
+						}
+						
+						System.out.println(id + " :: " + item.getName() + " :: " + plainFP + " >>> dist: " + dist + "  Counter::" + counter);	
+						//System.out.println("Counter::" + counter);
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-
-					try {
-						if (queryStr == null || queryStr.equals("-1")) {
-
-							System.out.println("Return to root menu!");
-
-							break;
-						} else if (Integer.parseInt(queryStr) > queryRecords
-								.size() || Integer.parseInt(queryStr) <= 0) {
-
-							System.out
-									.println("Warning: query index should be limited in [1, limit]");
-
-							continue;
-						} else {
-							queryIndex = Integer.parseInt(queryStr);
-							
-							queryRecord = queryRecords.get(queryIndex-1);
-
-							System.out.println("For query item id : "
-									+ queryRecord.getId() + ", name : " + queryRecord.getName() + ", fingerprint : " + queryRecord.getValue());
-						}
-					} catch (NumberFormatException e) {
-						System.out
-								.println("Warning: query index should be limited in [1, "
-										+ rawRecords.size() + "]");
-						continue;
-					}
-
-					long stOfGenQuery = System.currentTimeMillis();
-					
-					// prepare the query message
-					List<Element> tArray = new ArrayList<Element>(lshL);
-					
-
-					long[] lshVector = lsh.computeLSH(queryRecord.getValue());
-					
-					for (int i = 0; i < lshL; i++) {
-						
-						Element t = params.h1Pre.pow(BigInteger.valueOf(lshVector[i])).powZn(csp.getKeyV(detectorId));
-						
-						tArray.add(t);
-					}
-					
-					long etOfGenQuery = System.currentTimeMillis();
-					
-					System.out.println("Time cost of generate query: " + (etOfGenQuery - stOfGenQuery) + " ms.");
-					
-					long time1 = System.currentTimeMillis();
-					
-					Map<Integer, Integer> searchResult = repo.secureSearch(detectorId, tArray);
-					
-					long time2 = System.currentTimeMillis();
-
-					System.out.println("Cost " + (time2 - time1) + " ms.");
-					
-					long avgDecTime = 0;
-					
-					if (searchResult != null && searchResult.size() > 0) {
-						
-						for (Map.Entry<Integer, Integer> entry : searchResult.entrySet()) {
-
-							int id = entry.getKey();
-							int counter = entry.getValue();
-							
-							EncryptedFingerprint item = repo.getEncryptedFingerprints().get(id);
-							
-							BigInteger plainFP;
-							try {
-								
-								long stOfDec = System.nanoTime();
-								
-								plainFP = Paillier.Dec(item.getCipherFP(), repo.getKeyF(), csp.getKeyPrivate(repo.getId()));
-								
-								long etOfDec = System.nanoTime();
-								
-								avgDecTime += etOfDec - stOfDec;
-								
-								int dist = Distance.getHammingDistanceV2(queryRecord.getValue(), plainFP);
-								
-								if (dist > threshold) {
-									
-									continue;
-								}
-								
-								System.out.println(id + " :: " + item.getName() + " :: " + plainFP + " >>> dist: " + dist + "  Counter::" + counter);	
-								//System.out.println("Counter::" + counter);
-							} catch (Exception e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-						}
-						
-						System.out.println("Avg dec time is:" + (double)avgDecTime/searchResult.size() / 1000000 + " ms.");
-						
-					} else {
-						System.out.println("No similar item!!!");
-					}
-					
-					// print the statistics
-					//System.out.println("The recall is : " + MyAnalysis.computeRecall(queryRecord.getName(), searchResult, rawRecords, numOfPositive));
-					
-					//System.out.println("The precision is : " + MyAnalysis.computePrecision(queryRecord.getName(), searchResult, rawRecords));
-				}
-			} else if (operationType == SysConstant.OPERATION_ANALYZE) {
-				
-				RawRecord queryRecord;
-				
-				float avgGenTokenTime = 0;
-				
-				long avgSearchTime = 0;
-				
-				float avgRecall = 0;
-				
-				float avgPrecision = 0;
-				
-				int avgNumOfCandidate = 0;
-				
-				int queryTimes = 0;
-				
-				for (int i = 0; i < queryRecords.size(); i++) {
-					
-					queryRecord = queryRecords.get(i);
-					
-
-					
-					System.out.println(++queryTimes);
-					
-					long stOfGenToken = System.currentTimeMillis();
-					// prepare the query message
-					List<Element> Q = new ArrayList<Element>(lshL);
-					
-
-					long[] lshVector = lsh.computeLSH(queryRecord.getValue());
-					
-					for (int j = 0; j < lshL; j++) {
-						
-						Element t = params.h1Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
-						
-						Q.add(t);
-					}
-					
-					long etOfGenToken = System.currentTimeMillis();
-					
-					long time1 = System.currentTimeMillis();
-					
-					Map<Integer, Integer> searchResult = repo.secureSearch(detectorId, Q);
-					
-					long time2 = System.currentTimeMillis();
-
-					avgGenTokenTime += etOfGenToken - stOfGenToken;
-					
-					avgSearchTime += time2 - time1;
-					
-					avgNumOfCandidate += searchResult.size();
-					
-					//avgRecall += MyAnalysis.computeRecall(queryRecord.getName(), searchResult, rawRecords, numOfPositive);
-					
-					//avgPrecision += MyAnalysis.computePrecision(queryRecord.getName(), searchResult, rawRecords);
-				
 				}
 				
-				// print the statistics
-				//System.out.println("Average recall is        : " + avgRecall/queryTimes*100 + " %");
-				//System.out.println("Average precision is     : " + avgPrecision/queryTimes*100 + " %");
+				System.out.println("Avg dec time is:" + (double)avgDecTime/searchResult.size() / 1000000 + " ms.");
 				
-				
-				System.out.println("\nAverage genToken time is : " + avgGenTokenTime/(float)queryTimes + " ms");
-				System.out.println("Average search time is   : " + avgSearchTime/(float)queryTimes + " ms");
-				System.out.println("Average candidate size   : " + avgNumOfCandidate/queryTimes);
-				
-				
-				
-			} else if (operationType == SysConstant.OPERATION_ANALYZE_TOP_K) {
-				
-				RawRecord queryRecord;
-				
-				float avgGenTokenTime = 0;
-				
-				long avgSearchTime = 0;
-				
-				float avgRecall = 0;
-								
-				int avgNumOfCandidate = 0;
-				
-				int queryTimes = 0;
-				
-				int[] topK_list = {1,3,5,8,10,13,15,18,20,30,40,50}; // the choice of K for "top K"
-				
-				float[] avgAccuracy = new float[topK_list.length];
-				
-				for(int j=0; j<avgAccuracy.length;++j)
-					avgAccuracy[j] = 0.0F;
-				
-				for (int i = 0; i < queryRecords.size(); i++) {
-					
-					queryRecord = queryRecords.get(i);
-					
-					++queryTimes;
-					System.out.println(queryTimes);
-					
-					long stOfGenToken = System.currentTimeMillis();
-					// prepare the query message
-					List<Element> Q = new ArrayList<Element>(lshL);
-					
-
-					long[] lshVector = lsh.computeLSH(queryRecord.getValue());
-					
-					for (int j = 0; j < lshL; j++) {
-						
-						Element t = params.h1Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
-						
-						Q.add(t);
-					}
-					
-					long etOfGenToken = System.currentTimeMillis();
-					
-					long time1 = System.currentTimeMillis();
-					
-					Map<Integer, Integer> searchResult = repo.secureSearch(detectorId, Q);
-					
-					// rank the result
-					List<Entry<Integer, Integer>> rankedList = new ArrayList<Entry<Integer, Integer>>(searchResult.entrySet());   
-					  
-					Collections.sort(rankedList, new Comparator<Object>(){   
-					          public int compare(Object e1, Object e2){   
-					        int v1 = ((Entry<Integer, Integer>)e1).getValue();   
-					        int v2 = ((Entry<Integer, Integer>)e2).getValue();   
-					        return v2-v1;   
-					           
-					    }   
-					}); 
-					
-					long time2 = System.currentTimeMillis();
-
-					avgGenTokenTime += etOfGenToken - stOfGenToken;
-					
-					avgSearchTime += time2 - time1;
-					
-					avgNumOfCandidate += searchResult.size();
-					
-					// 2015 06 20 Update: for different topK, calculate a precision & recall 
-					
-					for (int j = 0; j < topK_list.length; j++) {
-						
-						int topK = topK_list[j];
-						
-						if (rankedList.size() < topK) {
-							topK = rankedList.size();
-						}
-						
-						avgAccuracy[j] += MyAnalysis.computeTopK(queryRecord, rankedList.subList(0, topK), rawRecords, threshold);
-					}
-				
-				}
-				
-				// print the statistics
-				//System.out.println("Average recall is        : " + avgRecall/queryTimes*100 + " %");
-				for (int j = 0; j < topK_list.length; j++) {
-					
-					System.out.println("Average accuracy of top-" + topK_list[j] + " is     : " + avgAccuracy[j]/queryTimes*100 + " %");
-				}
-				
-				
-				System.out.println("\nAverage genToken time is : " + avgGenTokenTime/(float)queryTimes + " ms");
-				System.out.println("Average search time is   : " + avgSearchTime/(float)queryTimes + " ms");
-				System.out.println("Average candidate size   : " + avgNumOfCandidate/queryTimes);
-	
-
-			} else if (operationType == SysConstant.OPERATION_ANALYZE_CDF) {
-				
-				RawRecord queryRecord;
-				
-				float avgRecall = 0;
-								
-				int avgNumOfCandidate = 0;
-				
-				int queryTimes = 0;
-				
-				int[] numOfRetrieval_list = {1,5,10,15,20,30,40,50};
-				
-				int[][] cntRecord = new int[numOfRetrieval_list.length][queryRecords.size()];
-				
-				//initialize result 2d array to 0
-				for (int i = 0; i < numOfRetrieval_list.length; i++) 
-					for (int j = 0; j < queryRecords.size(); j++) 
-						cntRecord[i][j] = 0;
-								
-				for (int i = 0; i < queryRecords.size(); i++) {
-					
-					queryRecord = queryRecords.get(i);
-					
-					++queryTimes;
-					
-					// prepare the query message
-					List<Element> Q = new ArrayList<Element>(lshL);
-					
-					long[] lshVector = lsh.computeLSH(queryRecord.getValue());
-					
-					for (int j = 0; j < lshL; j++) {
-						
-						Element t = params.h1Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
-						
-						Q.add(t);
-					}
-					
-					Map<Integer, Integer> searchResult = repo.secureSearch(detectorId, Q);
-					
-					// rank the result
-					List<Entry<Integer, Integer>> rankedList = new ArrayList<Entry<Integer, Integer>>(searchResult.entrySet());   
-					  
-					Collections.sort(rankedList, new Comparator<Object>(){   
-					          public int compare(Object e1, Object e2){   
-					        int v1 = ((Entry<Integer, Integer>)e1).getValue();   
-					        int v2 = ((Entry<Integer, Integer>)e2).getValue();   
-					        return v2-v1;   
-					           
-					    }   
-					}); 
-									
-					
-					// 2015 06 20 Update: for different numOfRetrieval, print cntCompare per query 					
-					for (int j = 0; j < numOfRetrieval_list.length; j++) {						
-						int numOfRetrieval = numOfRetrieval_list[j];
-						
-						if (rankedList.size() <= numOfRetrieval) {
-							cntRecord[j][i] = rankedList.size();
-						}else {
-							cntRecord[j][i] = MyAnalysis.computeCDF(queryRecord, rankedList, rawRecords, threshold,numOfRetrieval);
-						}						
-					}									
-				} // end of query
-				
-		        //print result to file
-				BufferedWriter writer = null;
-		        
-		        try {
-					writer = new BufferedWriter(new FileWriter("./cdfResult.txt", false));
-		        
-			        for (int i = 0; i < numOfRetrieval_list.length; i++)
-			        {
-						for (int j = 0; j < queryRecords.size(); j++) 
-							writer.write(cntRecord[i][j]+";");
-						writer.write("\n\n\n");
-			        }
-			        
-			        writer.close();
-		        	
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-		        
-			} else if (operationType == SysConstant.OPERATION_COUNT_ITEMS) {
-				
-				RawRecord queryRecord;
-				
-				int[] numOfItemsInThreshold = new int [threshold+1];
-
-				int queryTimes = 0;
-				
-				long avgGenQueryTime = 0;
-				
-				long avgSearchTime = 0;
-
-				for (int i = 0; i < queryRecords.size(); i++) {
-
-					queryRecord = queryRecords.get(i);
-					
-					System.out.println(++queryTimes);
-					
-					long stOfGenQuery = System.nanoTime();
-					
-					// prepare the query message
-					List<Element> Q = new ArrayList<Element>(lshL);
-
-					long[] lshVector = lsh.computeLSH(queryRecord.getValue());
-					
-					for (int j = 0; j < lshL; j++) {
-						
-						Element t = params.h1Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
-						
-						Q.add(t);
-					}
-					
-					long etOfGenQuery = System.nanoTime();
-					
-					avgGenQueryTime += etOfGenQuery - stOfGenQuery;
-					
-					long stSearchTime = System.currentTimeMillis();
-					
-					Map<Integer, Integer> searchResult = repo.secureSearch(detectorId, Q);
-					
-					long etSearchTime = System.currentTimeMillis();
-					
-					avgSearchTime += etSearchTime - stSearchTime;
-					
-					int[] tmpResult = new int[threshold+1];
-					
-					for (Map.Entry<Integer, Integer> entry : searchResult.entrySet()) {
-
-						int id = entry.getKey();
-						
-						int dist = Distance.getHammingDistanceV2(queryRecord.getValue(), rawRecords.get(id-1).getValue());
-						
-						if (dist <= threshold) {
-							
-							for (int j = dist; j <= threshold; j++) {
-								tmpResult[j]++;
-							}
-						}
-					}
-					
-					
-					for (int j = 0; j <= threshold; j++) {
-						
-						numOfItemsInThreshold[j] += tmpResult[j];
-					}
-					
-				}
-				
-				System.out.println("Avg gen query time is:" + (double)avgGenQueryTime/queryRecords.size() / 1000000 + " ms.");
-				System.out.println("Avg search time is:" + (double)avgSearchTime/queryRecords.size() + " ms.");
-				// print the statistics
-				System.out.println("Average located items' number are:\n");
-				
-				for (int i = 0; i <= threshold; i++) {
-					
-					System.out.println("threshold < " + i + ": " + numOfItemsInThreshold[i]/queryRecords.size());
-				}
-			} //else if (operationType == SysConstant.OPERATION_THROUGHPUT) {}
+			} else {
+				System.out.println("No similar item!!!");
+			}
+			
+			// print the statistics
+			//System.out.println("The recall is : " + MyAnalysis.computeRecall(queryRecord.getName(), searchResult, rawRecords, numOfPositive));
+			
+			//System.out.println("The precision is : " + MyAnalysis.computePrecision(queryRecord.getName(), searchResult, rawRecords));
 		}
 	}
 
-	private static List<Map<Integer, Long>> computeLSH(List<RawRecord> rawRecords,
+	private static void analyzeInCiphertext(List<RawRecord> queryRecords, List<RawRecord> rawDBRecords, int detectorId, Repository repo, Parameters params, CSP csp, HammingLSH lsh, int lshL, int threshold) {
+
+		RawRecord queryRecord;
+		
+		float avgGenTokenTime = 0;
+		
+		long avgSearchTime = 0;
+		
+		int avgNumOfCandidate = 0;
+		
+		int queryTimes = 0;
+		
+		for (int i = 0; i < queryRecords.size(); i++) {
+			
+			queryRecord = queryRecords.get(i);
+			
+			System.out.println(++queryTimes);
+			
+			long stOfGenToken = System.currentTimeMillis();
+			// prepare the query message
+			List<Element> Q = new ArrayList<Element>(lshL);
+			
+
+			long[] lshVector = lsh.computeLSH(queryRecord.getValue());
+			
+			for (int j = 0; j < lshL; j++) {
+				
+				Element t = params.h1Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
+				
+				Q.add(t);
+			}
+			
+			long etOfGenToken = System.currentTimeMillis();
+			
+			long time1 = System.currentTimeMillis();
+			
+			Map<Integer, Integer> searchResult = repo.secureSearch(detectorId, Q);
+			
+			long time2 = System.currentTimeMillis();
+
+			avgGenTokenTime += etOfGenToken - stOfGenToken;
+			
+			avgSearchTime += time2 - time1;
+			
+			avgNumOfCandidate += searchResult.size();
+		}
+		
+		System.out.println("\nAverage genToken time is : " + avgGenTokenTime/(float)queryTimes + " ms");
+		System.out.println("Average search time is   : " + avgSearchTime/(float)queryTimes + " ms");
+		System.out.println("Average candidate size   : " + avgNumOfCandidate/queryTimes);
+	}
+	
+	private static void analyzeTopKInCiphertext(List<RawRecord> queryRecords, List<RawRecord> rawDBRecords, int detectorId, Repository repo, Parameters params, CSP csp, HammingLSH lsh, int lshL, int threshold) {
+
+		RawRecord queryRecord;
+		
+		float avgGenTokenTime = 0;
+		
+		long avgSearchTime = 0;
+						
+		int avgNumOfCandidate = 0;
+		
+		int queryTimes = 0;
+		
+		int[] topK_list = {1,3,5,8,10,13,15,18,20,30,40,50}; // the choice of K for "top K"
+		
+		float[] avgAccuracy = new float[topK_list.length];
+		
+		for(int j=0; j<avgAccuracy.length;++j)
+			avgAccuracy[j] = 0.0F;
+		
+		for (int i = 0; i < queryRecords.size(); i++) {
+			
+			queryRecord = queryRecords.get(i);
+			
+			++queryTimes;
+			System.out.println(queryTimes);
+			
+			long stOfGenToken = System.currentTimeMillis();
+			// prepare the query message
+			List<Element> Q = new ArrayList<Element>(lshL);
+			
+
+			long[] lshVector = lsh.computeLSH(queryRecord.getValue());
+			
+			for (int j = 0; j < lshL; j++) {
+				
+				Element t = params.h1Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
+				
+				Q.add(t);
+			}
+			
+			long etOfGenToken = System.currentTimeMillis();
+			
+			long time1 = System.currentTimeMillis();
+			
+			Map<Integer, Integer> searchResult = repo.secureSearch(detectorId, Q);
+			
+			// rank the result
+			List<Entry<Integer, Integer>> rankedList = new ArrayList<Entry<Integer, Integer>>(searchResult.entrySet());   
+			  
+			Collections.sort(rankedList, new Comparator<Object>(){   
+			          @SuppressWarnings("unchecked")
+					public int compare(Object e1, Object e2){   
+			        int v1 = ((Entry<Integer, Integer>)e1).getValue();   
+			        int v2 = ((Entry<Integer, Integer>)e2).getValue();   
+			        return v2-v1;   
+			           
+			    }   
+			}); 
+			
+			long time2 = System.currentTimeMillis();
+
+			avgGenTokenTime += etOfGenToken - stOfGenToken;
+			
+			avgSearchTime += time2 - time1;
+			
+			avgNumOfCandidate += searchResult.size();
+			
+			// 2015 06 20 Update: for different topK, calculate a precision & recall 
+			
+			for (int j = 0; j < topK_list.length; j++) {
+				
+				int topK = topK_list[j];
+				
+				if (rankedList.size() < topK) {
+					topK = rankedList.size();
+				}
+				
+				avgAccuracy[j] += MyAnalysis.computeTopK(queryRecord, rankedList.subList(0, topK), rawDBRecords, threshold);
+			}
+		
+		}
+		
+		// print the statistics
+		//System.out.println("Average recall is        : " + avgRecall/queryTimes*100 + " %");
+		for (int j = 0; j < topK_list.length; j++) {
+			
+			System.out.println("Average accuracy of top-" + topK_list[j] + " is     : " + avgAccuracy[j]/queryTimes*100 + " %");
+		}
+		
+		
+		System.out.println("\nAverage genToken time is : " + avgGenTokenTime/(float)queryTimes + " ms");
+		System.out.println("Average search time is   : " + avgSearchTime/(float)queryTimes + " ms");
+		System.out.println("Average candidate size   : " + avgNumOfCandidate/queryTimes);
+	}
+	
+	private static void analyzeCDFInCiphertext(List<RawRecord> queryRecords, List<RawRecord> rawDBRecords, int detectorId, Repository repo, Parameters params, CSP csp, HammingLSH lsh, int lshL, int threshold) {
+
+		RawRecord queryRecord;
+		
+		int[] numOfRetrieval_list = {1,5,10,15,20,30,40,50};
+		
+		int[][] cntRecord = new int[numOfRetrieval_list.length][queryRecords.size()];
+		
+		//initialize result 2d array to 0
+		for (int i = 0; i < numOfRetrieval_list.length; i++) 
+			for (int j = 0; j < queryRecords.size(); j++) 
+				cntRecord[i][j] = 0;
+						
+		for (int i = 0; i < queryRecords.size(); i++) {
+			
+			queryRecord = queryRecords.get(i);
+			
+			// prepare the query message
+			List<Element> Q = new ArrayList<Element>(lshL);
+			
+			long[] lshVector = lsh.computeLSH(queryRecord.getValue());
+			
+			for (int j = 0; j < lshL; j++) {
+				
+				Element t = params.h1Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
+				
+				Q.add(t);
+			}
+			
+			Map<Integer, Integer> searchResult = repo.secureSearch(detectorId, Q);
+			
+			// rank the result
+			List<Entry<Integer, Integer>> rankedList = new ArrayList<Entry<Integer, Integer>>(searchResult.entrySet());   
+			  
+			Collections.sort(rankedList, new Comparator<Object>(){   
+			          @SuppressWarnings("unchecked")
+					public int compare(Object e1, Object e2){   
+			        int v1 = ((Entry<Integer, Integer>)e1).getValue();   
+			        int v2 = ((Entry<Integer, Integer>)e2).getValue();   
+			        return v2-v1;   
+			           
+			    }   
+			}); 
+							
+			
+			// 2015 06 20 Update: for different numOfRetrieval, print cntCompare per query 					
+			for (int j = 0; j < numOfRetrieval_list.length; j++) {						
+				int numOfRetrieval = numOfRetrieval_list[j];
+				
+				if (rankedList.size() <= numOfRetrieval) {
+					cntRecord[j][i] = rankedList.size();
+				}else {
+					cntRecord[j][i] = MyAnalysis.computeCDF(queryRecord, rankedList, rawDBRecords, threshold,numOfRetrieval);
+				}						
+			}									
+		} // end of query
+		
+        //print result to file
+		BufferedWriter writer = null;
+        
+        try {
+			writer = new BufferedWriter(new FileWriter("./cdfResult.txt", false));
+        
+	        for (int i = 0; i < numOfRetrieval_list.length; i++)
+	        {
+				for (int j = 0; j < queryRecords.size(); j++) 
+					writer.write(cntRecord[i][j]+";");
+				writer.write("\n\n\n");
+	        }
+	        
+	        writer.close();
+        	
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	private static void countItemsInCiphertext(List<RawRecord> queryRecords, List<RawRecord> rawDBRecords, int detectorId, Repository repo, Parameters params, CSP csp, HammingLSH lsh, int lshL, int threshold) {
+
+		RawRecord queryRecord;
+		
+		int[] numOfItemsInThreshold = new int [threshold+1];
+
+		int queryTimes = 0;
+		
+		long avgGenQueryTime = 0;
+		
+		long avgSearchTime = 0;
+
+		for (int i = 0; i < queryRecords.size(); i++) {
+
+			queryRecord = queryRecords.get(i);
+			
+			System.out.println(++queryTimes);
+			
+			long stOfGenQuery = System.nanoTime();
+			
+			// prepare the query message
+			List<Element> Q = new ArrayList<Element>(lshL);
+
+			long[] lshVector = lsh.computeLSH(queryRecord.getValue());
+			
+			for (int j = 0; j < lshL; j++) {
+				
+				Element t = params.h1Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(detectorId));
+				
+				Q.add(t);
+			}
+			
+			long etOfGenQuery = System.nanoTime();
+			
+			avgGenQueryTime += etOfGenQuery - stOfGenQuery;
+			
+			long stSearchTime = System.currentTimeMillis();
+			
+			Map<Integer, Integer> searchResult = repo.secureSearch(detectorId, Q);
+			
+			long etSearchTime = System.currentTimeMillis();
+			
+			avgSearchTime += etSearchTime - stSearchTime;
+			
+			int[] tmpResult = new int[threshold+1];
+			
+			for (Map.Entry<Integer, Integer> entry : searchResult.entrySet()) {
+
+				int id = entry.getKey();
+				
+				int dist = Distance.getHammingDistanceV2(queryRecord.getValue(), rawDBRecords.get(id-1).getValue());
+				
+				if (dist <= threshold) {
+					
+					for (int j = dist; j <= threshold; j++) {
+						tmpResult[j]++;
+					}
+				}
+			}
+			
+			for (int j = 0; j <= threshold; j++) {
+				
+				numOfItemsInThreshold[j] += tmpResult[j];
+			}
+			
+		}
+		
+		System.out.println("Avg gen query time is:" + (double)avgGenQueryTime/queryRecords.size() / 1000000 + " ms.");
+		System.out.println("Avg search time is:" + (double)avgSearchTime/queryRecords.size() + " ms.");
+		// print the statistics
+		System.out.println("Average located items' number are:\n");
+		
+		for (int i = 0; i <= threshold; i++) {
+			
+			System.out.println("threshold <= " + i + ": " + numOfItemsInThreshold[i]/queryRecords.size());
+		}
+	}
+	
+	private static List<Map<Integer, Long>> batchComputeLSH(List<RawRecord> rawRecords,
 			Parameters params) {
 		
 		List<Map<Integer, Long>> lshVectorsInL = new ArrayList<Map<Integer, Long>>(params.lshL);

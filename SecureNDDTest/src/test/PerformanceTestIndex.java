@@ -70,7 +70,7 @@ public class PerformanceTestIndex {
 		int numOfLimit = config.getInt("numOfLimit");
 		
 		// hardcode: set numOfRepo = 1
-		int numOfRepo = 1; //config.getInt("numOfRepo");
+		int numOfRepo = config.getInt("numOfRepo");
 		String pairingSettingPath = config.getString("pairingSettingPath");
 		
 		int bitLength = config.getInt("bitLength");

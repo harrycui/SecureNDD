@@ -1,10 +1,10 @@
-inputPath= E:\\Dropbox\\CityU\\Our papers\\infocom_2016\\exp\\data\\fingerprint\\
-inputFileName= ahash_fp_jpeg.txt
+inputPath= C:\Users\Helei\Desktop\nddTest\fingerprint\
+dbFileName= ahash_fp_jpeg.txt
 queryFileName= ahash_fp_jpeg_query.txt
 
 numOfLimit= 20000
 numOfRepo= 1
-pairingSettingPath= D:\workspace2\SecureNDDTest\src\test\d159.properties
+pairingSettingPath= C:\Users\Helei\Desktop\nddTest\d159.properties
 
 # parameters for Paillier
 bitLength= 1024
@@ -17,4 +17,4 @@ lshDimension= 64
 # the larger K, the more accurate, but the smaller, the more items can be located
 lshK= 5
 threshold= 10
-numOfPositive= 10
+#numOfPositive= 10
