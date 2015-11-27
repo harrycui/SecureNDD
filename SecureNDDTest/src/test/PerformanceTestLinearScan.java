@@ -2,6 +2,7 @@ package test;
 
 import it.unisa.dia.gas.jpbc.Element;
 
+import java.awt.SystemTray;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import secure.Paillier;
+import throughput.TestThread;
 import util.ConfigParser;
 import util.FileTool;
 import util.PrintTool;
@@ -33,6 +35,7 @@ import cloud.MyCountDown;
 import cloud.RawRecord;
 import cloud.Repository;
 import cloud.SingleRepoInsertThread;
+import cloud.SingleRepoSearchThread;
 
 /**
  * For performance evaluation, we just use one repository and involve the ranking mechanism.
@@ -119,8 +122,14 @@ public class PerformanceTestLinearScan {
 		
 		Repository repo = new Repository(rid, params, csp.getKeyV(rid), csp.getKeyPublic(rid));
 		
+		long stOfAuth = System.nanoTime();
+		
 		// authorize the detector
 		Element delta = csp.authorize(rid, detectorId);
+		
+		long etOfAuth = System.nanoTime();
+		
+		System.out.println("Avg auth time is:" + (double)(etOfAuth - stOfAuth) / 1000000 + " ms.");
 					
 		// id = 0 is the detector
 		repo.addDelta(detectorId, delta);
@@ -179,6 +188,7 @@ public class PerformanceTestLinearScan {
 							+ "[3]  analyze top-k;\n"
 							+ "[4]  analyze CDF;\n"
 							+ "[5]  average located items;\n"
+							+ "[6]  throughput;\n"
 							+ "[QUIT] quit system.\n\n"
 							+ "--->");
 			String inputStr;
@@ -194,17 +204,17 @@ public class PerformanceTestLinearScan {
 						System.out.println("Quit!");
 
 						break;
-					} else if (Integer.parseInt(inputStr) > 5
+					} else if (Integer.parseInt(inputStr) > 6
 							|| Integer.parseInt(inputStr) < 1) {
 
-						System.out.println("Warning: operation type should be limited in [1, 5], please try again!");
+						System.out.println("Warning: operation type should be limited in [1, 6], please try again!");
 
 						continue;
 					} else {
 						operationType = Integer.parseInt(inputStr);
 					}
 				} catch (NumberFormatException e) {
-					System.out.println("Warning: operation type should be limited in [1, 5], please try again!");
+					System.out.println("Warning: operation type should be limited in [1, 6], please try again!");
 
 					continue;
 				}
@@ -662,6 +672,124 @@ public class PerformanceTestLinearScan {
 				for (int i = 0; i <= threshold; i++) {
 					
 					System.out.println("threshold < " + i + ": " + numOfItemsInThreshold[i]/queryRecords.size());
+				}
+			} else if (operationType == SysConstant.OPERATION_THROUGHPUT) {
+				System.out.println("\nModel: query.");
+
+				while (true) {
+					System.out
+							.println("\n\nNow, please set the number of users: (-1 means return to root menu)");
+
+					String strNumOfUser = null;
+					int userNum;
+					String strNumOfRepo = null;
+					int repoNum;
+					
+					
+					try {
+						strNumOfUser = br.readLine();
+						System.out
+						.println("\n\nNow, please set the number of repos: (-1 means return to root menu)");
+						strNumOfRepo = br.readLine();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+
+					try {
+						if (strNumOfUser == null || strNumOfUser.equals("-1") || strNumOfRepo == null || strNumOfRepo.equals("-1")) {
+
+							System.out.println("Return to root menu!");
+
+							break;
+						} else if (Integer.parseInt(strNumOfUser) <=0 || Integer.parseInt(strNumOfRepo) <= 0) {
+
+							System.out
+									.println("Warning: query index should be limited in [1, limit]");
+
+							continue;
+						} else {
+							userNum = Integer.parseInt(strNumOfUser);
+							
+							repoNum = Integer.parseInt(strNumOfRepo);
+							
+
+							System.out.println("Test on : "
+									+ userNum + " users, " + repoNum + " repos.\n");
+						}
+					} catch (NumberFormatException e) {
+						System.out
+								.println("Warning: format error.");
+						continue;
+					}
+
+					
+					// prepare userNum of queries
+					
+					List<List<Element>> queries = new ArrayList<List<Element>>(userNum);
+					List<Long> throughput = new ArrayList<Long>(userNum);
+					
+					int[] users = new int[userNum];
+					
+					for (int i = 0; i < userNum; i++) {
+						
+						users[i] = csp.register();
+						
+						RawRecord queryRecord;
+						
+						queryRecord = queryRecords.get(i+1);
+						
+						// prepare the query message
+						List<Element> tArray = new ArrayList<Element>(lshL);
+						
+
+						long[] lshVector = lsh.computeLSH(queryRecord.getValue());
+						
+						for (int j = 0; j < lshL; j++) {
+							
+							Element t = params.h1Pre.pow(BigInteger.valueOf(lshVector[j])).powZn(csp.getKeyV(users[i]));
+							
+							tArray.add(t);
+						}
+						
+						queries.add(tArray);
+						
+						// add users to repo
+						Element auth = csp.authorize(rid, users[i]);
+									
+						// id = 0 is the detector
+						repo.addDelta(users[i], auth);
+						
+						throughput.add(new Long(0));
+					}
+					
+					
+					
+					// multithread to simulate
+					if (userNum > 0) {
+						
+			        	//multiple threads
+				        MyCountDown threadCounter3 = new MyCountDown(userNum);
+				        for (int i = 0; i < userNum; i++) {
+				        	
+				        	//TestThread t = new TestThread("Thread " + i, threadCounter3, users[i], queries.get(i), repo, throughput.get(i));
+
+					        //t.start();
+				        }
+
+				        // wait for all threads done
+				        while (true) {
+				            if (!threadCounter3.hasNext())
+				                break;
+				        }
+					}
+					
+					Long total = 0L;
+					
+					for (int i = 0; i < userNum; i++) {
+						total += throughput.get(i);
+					}
+					
+					System.out.println("Total throughput is : " + total);
 				}
 			}
 		}

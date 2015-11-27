@@ -9,9 +9,10 @@ import java.util.Map;
 
 import secure.PRF;
 import secure.PaillierPublicKey;
+import base.MyCounter;
 import base.Parameters;
 
-public class Repository {
+public class Repository2 {
 
 	private int id;
 
@@ -23,9 +24,8 @@ public class Repository {
 	// key to encrypt each fingerprint
 	private PaillierPublicKey keyF;
 	
-	//private List<SecureRecord> secureRecords;
-	// In this version, each "l" is grouped together (in one Map), secureRecords.size() = l
-	private List<Map<Integer, SecureToken>> secureRecords;
+	
+	private List<SecureRecord> secureRecords;
 	
 	private Map<Integer, Element> deltas;
 	
@@ -36,11 +36,19 @@ public class Repository {
 	// added on 16/7/2015
 	private List<Map<String, List<Integer>>> cachedIndex;
 	
-	public Repository() {
+	public Repository2(Repository2 repo) {
 		
+		this.id = repo.getId();
+		this.params = new Parameters(repo.getParams());
+		this.keyV = repo.getKeyV().duplicate();
+		this.keyF = repo.keyF;
+		this.secureRecords = new ArrayList<SecureRecord>(repo.getSecureRecords());
+		this.deltas = new HashMap<Integer, Element>(repo.getDeltas());
+		this.encryptedFingerprints = new HashMap<Integer, EncryptedFingerprint>(repo.getEncryptedFingerprints());
+		this.cachedIndex = new ArrayList<Map<String, List<Integer>>>(repo.cachedIndex);
 	}
 	
-	public Repository(int id, Parameters params, Element keyV, PaillierPublicKey keyF) {
+	public Repository2(int id, Parameters params, Element keyV, PaillierPublicKey keyF) {
 		
 		this.id = id;
 		this.params = new Parameters(params);
@@ -50,13 +58,12 @@ public class Repository {
 		
 		this.keyF = keyF;
 		
-		this.secureRecords = new ArrayList<Map<Integer, SecureToken>>(params.lshL);
+		this.secureRecords = new ArrayList<SecureRecord>();
 		
 		// added on 16/7/2015
 		this.cachedIndex = new ArrayList<Map<String, List<Integer>>>(params.lshL);
 		
 		for (int i = 0; i < params.lshL; i++) {
-			this.secureRecords.add(new HashMap<Integer, SecureToken>());
 			
 			this.cachedIndex.add(new HashMap<String, List<Integer>>());
 		}
@@ -83,14 +90,13 @@ public class Repository {
 	 * 
 	 * @param secureRecord
 	 */
-	public void insert(Map<Integer, SecureToken> mapOfL, int id, SecureToken token) {
+	public void insert(SecureRecord secureRecord) {
 		
-		//this.secureRecords.add(secureRecord);
-		mapOfL.put(id, token);
+		this.secureRecords.add(secureRecord);
 	}
 	
 	
-	public Map<Integer, Integer> secureSearch(int uid, List<Element> tArray) {
+	public void secureSearch(int uid, List<Element> tArray, int repoNum, MyCounter numOfTest, long stTime) {
 		
 		// true = cached, false = miss
 		boolean[] flags = new boolean[this.params.lshL];
@@ -99,16 +105,50 @@ public class Repository {
 		
 		Map<Integer, Integer> searchResult = new HashMap<Integer, Integer>();
 		
+		//long numOfTest = 0L;
+		
+		long innerStTime;
+		
 		if (!this.deltas.containsKey(uid)) {
 			
 			System.out.println("This user has not been authorized in repository (id = " + this.id + ")!");
 			
-			return null;
+			//return 0;
 		} else {
 			
-			Element delta = this.deltas.get(uid);
+			while (true) {
+				
+				innerStTime = System.currentTimeMillis();
+				
+				if (innerStTime >= stTime) {
+					
+					//innerStTime = System.currentTimeMillis();
+					
+					System.out.println(innerStTime);
+					break;
+				}
+			}
 			
-			long stOfTrans = System.nanoTime();
+			for (int i = 0; i < repoNum-1; i++) {
+				
+				Element delta = this.deltas.get(uid);
+				
+				String[] adjustedQuery = new String[tArray.size()];
+				
+				// adjust the query tokens
+				for (int j = 0; j < tArray.size(); j++) {
+					
+					adjustedQuery[j] = params.pairing.pairing(tArray.get(j), delta)
+					.toString();
+					
+					/*if (cachedIndex.get(i).containsKey(adjustedQuery[i])) {
+						flags[i] = true;
+						numOfSearch--;
+					}*/
+				}
+			}
+			
+			Element delta = this.deltas.get(uid);
 			
 			String[] adjustedQuery = new String[tArray.size()];
 			
@@ -123,9 +163,7 @@ public class Repository {
 					numOfSearch--;
 				}*/
 			}
-			long etOfTrans = System.nanoTime();
 			
-			System.out.println("Avg trans time is:" + (double)(etOfTrans - stOfTrans) / 1000000 + " ms.");
 			
 			// linear scan the secure tokens in repo
 	        List<List<Integer>> tempResults = new ArrayList<>(this.params.lshL);
@@ -139,27 +177,38 @@ public class Repository {
 				}
 			}
 	        
-	        
-	        if (numOfSearch > 0) {
+	        long ii = 0;
+	        while (true){
+	        //for (int i = 0; i < secureRecords.size(); i++) {
+	        	
+	        	int idx = (int)(ii%secureRecords.size());
+	        	
+	        	List<SecureToken> sts = secureRecords.get(idx).getSecureTokens();
 				
-	        	//multiple threads
-		        MyCountDown threadCounter2 = new MyCountDown(numOfSearch);
-		        for (int i = 0; i < this.params.lshL; i++) {
-		        	
-		        	//false = miss
-		        	if (!flags[i]) {
-		        		SingleRepoSearchThread t = new SingleRepoSearchThread("Thread " + i, threadCounter2, adjustedQuery[i], secureRecords.get(i), tempResults.get(i));
-
-			            t.start();
-					}
-		        }
-
-		        // wait for all threads done
-		        while (true) {
-		            if (!threadCounter2.hasNext())
-		                break;
-		        }
+	        	for (int j = 0; j < sts.size(); j++) {
+	        		
+	        		SecureToken secureToken = sts.get(j);
+	    			
+	    			//long stOfMatchingTime = System.nanoTime();
+	    			
+	    			long c = PRF.HMACSHA1ToUnsignedInt(adjustedQuery[j], secureToken.getR());
+	    			
+	    			if (secureToken.getH() == c) {
+	    				
+	    				tempResults.get(j).add(idx);
+	    			}
+	    			//System.out.println(sts.size());
+				}
+	        	
+	        	numOfTest.add1();
+	        	ii++;
+	        	
+	        	if (System.currentTimeMillis() - innerStTime > 60000) {
+					break;
+				}
 			}
+	        
+	        
 			
 			for (int i = 0; i < this.params.lshL; i++) {
 				
@@ -180,9 +229,6 @@ public class Repository {
 				}
 			}
 		}
-		
-		
-		return searchResult;
 	}
 	
 	public boolean checkMatch(List<Element> query, SecureRecord secureRecord, Element delta) {
@@ -258,11 +304,21 @@ public class Repository {
 		this.keyF = keyF;
 	}
 
-	public List<Map<Integer, SecureToken>> getSecureRecords() {
+	public List<SecureRecord> getSecureRecords() {
 		return secureRecords;
 	}
 
-	public void setSecureRecords(List<Map<Integer, SecureToken>> secureRecords) {
+	public void setSecureRecords(List<SecureRecord> secureRecords) {
 		this.secureRecords = secureRecords;
 	}
+
+	public List<Map<String, List<Integer>>> getCachedIndex() {
+		return cachedIndex;
+	}
+
+	public void setCachedIndex(List<Map<String, List<Integer>>> cachedIndex) {
+		this.cachedIndex = cachedIndex;
+	}
+
+	
 }

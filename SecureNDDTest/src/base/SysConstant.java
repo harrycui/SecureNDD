@@ -12,5 +12,7 @@ public class SysConstant {
 	
 	public static final int OPERATION_COUNT_ITEMS = 5;
 	
+	public static final int OPERATION_THROUGHPUT = 6;
+	
 	public static final int LSH_L = 5;
 }

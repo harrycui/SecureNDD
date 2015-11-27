@@ -19,6 +19,14 @@ public class PaillierPublicKey {
 		this.nsquare = nsquare;
 		this.bitLength = bitLength;
 	}
+	
+	public PaillierPublicKey(PaillierPublicKey pk) {
+		
+		this.n = pk.n;
+		this.g = pk.g;
+		this.nsquare = pk.nsquare;
+		this.bitLength = pk.bitLength;
+	}
 
 	public BigInteger getN() {
 		return n;

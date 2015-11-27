@@ -33,4 +33,6 @@ public class SecureRecord {
 	public void setSecureTokens(List<SecureToken> secureTokens) {
 		this.secureTokens = secureTokens;
 	}
+	
+	
 }

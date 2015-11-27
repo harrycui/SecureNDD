@@ -105,24 +105,4 @@ public class AESCoder {
 		sb.append("}");
 		return sb.toString();
 	}
-
-	/*
-	 * public static void main(String[] args) throws Exception { byte[] key =
-	 * initSecretKey(); System.out.println("keyï¼š" + showByteArray(key));
-	 * 
-	 * Key k = toKey(key);
-	 * 
-	 * String data = "AESæ•°æ�®"; System.out.println("åŠ å¯†å‰�æ•°æ�®: string:"
-	 * + data); System.out.println("åŠ å¯†å‰�æ•°æ�®: byte[]:" +
-	 * showByteArray(data.getBytes())); System.out.println(); byte[] encryptData
-	 * = encrypt(data.getBytes(), k); System.out.println(
-	 * "åŠ å¯†å�Žæ•°æ�®: byte[]:" + showByteArray(encryptData));
-	 * System.out.println("åŠ å¯†å�Žæ•°æ�®: hexStr:" +
-	 * Hex.encodeHexStr(encryptData)); System.out.println(); byte[] decryptData
-	 * = decrypt(encryptData, k); System.out.println("è§£å¯†å�Žæ•°æ�®: byte[]:"
-	 * + showByteArray(decryptData)); System.out.println(
-	 * "è§£å¯†å�Žæ•°æ�®: string:" + new String(decryptData));
-	 * 
-	 * }
-	 */
 }

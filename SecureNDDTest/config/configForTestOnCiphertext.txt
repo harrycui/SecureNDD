@@ -1,7 +1,7 @@
 inputPath= /data/infocom_2016/output/
 inputFileName= phash_fp_jpeg.txt
 queryFileName= phash_fp_jpeg_query.txt
-numOfLimit= 200
+numOfLimit= 100
 numOfRepo= 1
 pairingSettingPath= /home/ubuntu/github/SecureNDD/SecureNDDTest/config/d159.properties
 # parameters for Paillier
