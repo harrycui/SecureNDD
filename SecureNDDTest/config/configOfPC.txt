@@ -1,16 +1,20 @@
 inputPath= E:\\Dropbox\\CityU\\Our papers\\infocom_2016\\exp\\data\\fingerprint\\
 inputFileName= ahash_fp_jpeg.txt
 queryFileName= ahash_fp_jpeg_query.txt
+
 numOfLimit= 20000
-numOfRepo= 4
+numOfRepo= 1
 pairingSettingPath= D:\workspace2\SecureNDDTest\src\test\d159.properties
+
 # parameters for Paillier
-bitLength= 512
+bitLength= 1024
 certainty= 64
+
 # parameters for LSH
 lshL= 5
 lshDimension= 64
+
 # the larger K, the more accurate, but the smaller, the more items can be located
-lshK= 10
+lshK= 5
 threshold= 10
 numOfPositive= 10

@@ -1,6 +1,6 @@
 package local;
 
-public abstract class Document {
+public abstract class DataItem {
 
 	private int id;
 	
@@ -10,13 +10,13 @@ public abstract class Document {
 	
 	public abstract void generate(int length, int type);
 	
-	public Document(int id, String name) {
+	public DataItem(int id, String name) {
 		super();
 		this.id = id;
 		this.name = name;
 	}
 
-	public Document(int id, String name, Fingerprint fingerprint) {
+	public DataItem(int id, String name, Fingerprint fingerprint) {
 		super();
 		this.id = id;
 		this.name = name;

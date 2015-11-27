@@ -23,10 +23,11 @@ import secure.Paillier;
 import throughput.TestThread;
 import util.ConfigParser;
 import util.FileTool;
+import util.MyAnalysis;
+import util.MyCounter;
 import util.PrintTool;
 import base.Distance;
 import base.HammingLSH;
-import base.MyAnalysis;
 import base.Parameters;
 import base.PlainNDD;
 import base.SysConstant;
@@ -40,7 +41,6 @@ import cloud.SecureRecord;
 import cloud.SecureToken;
 import cloud.SingleRepoInsertThread;
 import cloud.SingleRepoSearchThread;
-import base.MyCounter;
 
 /**
  * For performance evaluation, we just use one repository and involve the ranking mechanism.
@@ -155,8 +155,6 @@ public class ThroughputTestLinearScan {
 		/////
 		for (int i = 0; i < lshVectors.size(); i++) {
 			
-			
-			
 			List<SecureToken> secureTokens = new ArrayList<SecureToken>(lshL);
 			
 			for (int j = 0; j < lshL; j++) {
@@ -220,11 +218,6 @@ public class ThroughputTestLinearScan {
 			System.out
 					.print("\n\n----------------------- Root Menu -----------------------\n"
 							+ "Please select an operation:\n"
-							+ "[1]  query test;\n"
-							+ "[2]  analyze recall and precision;\n"
-							+ "[3]  analyze top-k;\n"
-							+ "[4]  analyze CDF;\n"
-							+ "[5]  average located items;\n"
 							+ "[6]  throughput;\n"
 							+ "[QUIT] quit system.\n\n"
 							+ "--->");
@@ -272,7 +265,7 @@ public class ThroughputTestLinearScan {
 			} else if (operationType == SysConstant.OPERATION_COUNT_ITEMS) {
 				
 			} else if (operationType == SysConstant.OPERATION_THROUGHPUT) {
-				System.out.println("\nModel: query.");
+				System.out.println("\nModel: throughput test.");
 
 				while (true) {
 					System.out
@@ -289,12 +282,36 @@ public class ThroughputTestLinearScan {
 					
 					try {
 						strNumOfUser = br.readLine();
+						
+						if (strNumOfUser.equals("-1")) {
+							
+							System.out.println("Return to root menu!");
+
+							break;
+						}
+
 						System.out
 						.println("\n\nNow, please set the number of repos: (-1 means return to root menu)");
 						strNumOfRepo = br.readLine();
+						
+						if (strNumOfRepo.equals("-1")) {
+							
+							System.out.println("Return to root menu!");
+
+							break;
+						}
+						
 						System.out
 						.println("\n\nNow, please set the startTime: (-1 means return to root menu)");
 						strStTime = br.readLine();
+						
+						if (strStTime.equals("-1")) {
+							
+							System.out.println("Return to root menu!");
+
+							break;
+						}
+						
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -308,7 +325,7 @@ public class ThroughputTestLinearScan {
 						} else if (Integer.parseInt(strNumOfUser) <=0 || Integer.parseInt(strNumOfRepo) <= 0) {
 
 							System.out
-									.println("Warning: query index should be limited in [1, limit]");
+									.println("Warning: query index should be larger than 0.");
 
 							continue;
 						} else {

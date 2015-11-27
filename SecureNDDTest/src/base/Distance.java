@@ -29,12 +29,7 @@ public class Distance {
 		String sv1 = Converter.bigInteger2String(v1, 9);
 		String sv2 = Converter.bigInteger2String(v2, 9);
 
-		/*System.out.println(sv1.length() + " : " + sv1.toString());
-		System.out.println(sv2.length() + " : " + sv2.toString());*/
-
 		dist = getHammingDistance(sv1, sv2);
-
-		//System.out.println(dist);
 
 		return dist;
 	}

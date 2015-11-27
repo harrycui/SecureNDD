@@ -1,1 +1,9 @@
 /secure/
+/base/
+/test/
+/util/
+/cloud/
+/throughput/
+/cloudV2/
+/cloudWithIndex/
+/local/

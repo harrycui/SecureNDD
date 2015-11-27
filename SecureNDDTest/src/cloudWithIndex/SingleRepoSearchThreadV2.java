@@ -1,11 +1,11 @@
-package cloudV2;
+package cloudWithIndex;
 
 import java.util.List;
 import java.util.Map;
 
-import cloud.MyCountDown;
-import secure.PRF;
 import secure.AESCoder;
+import secure.PRF;
+import cloud.MyCountDown;
 
 public class SingleRepoSearchThreadV2 extends Thread {
 
@@ -21,10 +21,10 @@ public class SingleRepoSearchThreadV2 extends Thread {
 	
 	private List<Integer> resultInL;
 	
-	private Map<String, List<Integer>> invertedIndexInL;
+	//private Map<String, List<Integer>> invertedIndexInL;
 
 	public SingleRepoSearchThreadV2(String threadName, MyCountDown threadCounter,
-			String at1InL, String at2InL, Map<Long,Integer> hIndexInL, Map<String,String> aIndexInL, List<Integer> resultInL, Map<String, List<Integer>> invertedIndexInL) {
+			String at1InL, String at2InL, Map<Long,Integer> hIndexInL, Map<String,String> aIndexInL, List<Integer> resultInL) {
 
 		super(threadName);
 
@@ -34,7 +34,7 @@ public class SingleRepoSearchThreadV2 extends Thread {
 		this.hIndexInL = hIndexInL;
 		this.aIndexInL = aIndexInL;
 		this.resultInL = resultInL;
-		this.invertedIndexInL = invertedIndexInL;
+		//this.invertedIndexInL = invertedIndexInL;
 		
 	}
 

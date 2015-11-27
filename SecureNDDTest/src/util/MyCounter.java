@@ -1,4 +1,4 @@
-package base;
+package util;
 
 public class MyCounter {
 
@@ -17,7 +17,7 @@ public class MyCounter {
 		this.ctr = ctr;
 	}
 	
-	public void add1() {
+	public void addOne() {
 		this.ctr++;
 	}
 }

@@ -19,10 +19,10 @@ import java.util.Map.Entry;
 import secure.Paillier;
 import util.ConfigParser;
 import util.FileTool;
+import util.MyAnalysis;
 import util.PrintTool;
 import base.Distance;
 import base.HammingLSH;
-import base.MyAnalysis;
 import base.Parameters;
 import base.SysConstant;
 import cloud.CSP;
@@ -31,9 +31,9 @@ import cloud.MyCountDown;
 import cloud.RawRecord;
 import cloud.Repository;
 import cloud.SingleRepoInsertThread;
-import cloudV2.IndexedToken;
-import cloudV2.RepositoryWithIndex;
-import cloudV2.SingleRepoInsertThreadV2;
+import cloudWithIndex.IndexedToken;
+import cloudWithIndex.RepositoryWithIndex;
+import cloudWithIndex.SingleRepoInsertThreadV2;
 
 /**
  * For performance evaluation, we just use one repository and involve the ranking mechanism.

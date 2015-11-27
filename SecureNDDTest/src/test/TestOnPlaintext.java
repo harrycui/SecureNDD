@@ -1,26 +1,19 @@
 package test;
 
-import it.unisa.dia.gas.jpbc.Element;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import cloud.RawRecord;
-import base.Distance;
-import base.MyAnalysis;
-import base.PlainNDD;
-import base.SysConstant;
 import local.NameFingerprintPair;
 import util.ConfigParser;
 import util.FileTool;
 import util.PrintTool;
+import base.Distance;
+import base.PlainNDD;
+import base.SysConstant;
 
 public class TestOnPlaintext {
 
@@ -39,9 +32,11 @@ public class TestOnPlaintext {
 		String inputPath = config.getString("inputPath");
 		String rawRecordFileName = config.getString("inputFileName");
 		String querFileName = config.getString("queryFileName");
+		
 		// String outputPath = config.getString("outputPath");
 		// String outFileName = config.getString("outFileName");
-		int numOfLimit = config.getInt("numOfLimit");
+		//int numOfLimit = config.getInt("numOfLimit");
+		
 		int threshold = config.getInt("threshold");
 		int numOfPositive = config.getInt("numOfPositive");
 

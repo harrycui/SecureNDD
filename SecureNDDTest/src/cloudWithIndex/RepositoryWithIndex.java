@@ -4,7 +4,7 @@
  * The input is not "a list at once" but "one t a time"
  */
 
-package cloudV2;
+package cloudWithIndex;
 
 import it.unisa.dia.gas.jpbc.Element;
 
@@ -13,14 +13,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import secure.PRF;
+import secure.PaillierPublicKey;
+import base.Parameters;
 import cloud.EncryptedFingerprint;
 import cloud.MyCountDown;
 import cloud.SecureRecord;
 import cloud.SecureToken;
-import cloud.SingleRepoSearchThread;
-import secure.PRF;
-import secure.PaillierPublicKey;
-import base.Parameters;
 
 public class RepositoryWithIndex {
 
@@ -87,17 +86,6 @@ public class RepositoryWithIndex {
 		this.deltas.put(id, delta);
 	}
 	
-//	/**
-//	 * insert secure record
-//	 * 
-//	 * @param secureRecord
-//	 */
-//	public void insert(Map<Integer, SecureToken> mapOfL, int id, SecureToken token) {
-//		
-//		//this.secureRecords.add(secureRecord);
-//		mapOfL.put(id, token);
-//	}
-	
 
 	public Map<Integer, Integer> secureSearch(int uid, List<IndexedToken> tArray) {
 		
@@ -142,7 +130,7 @@ public class RepositoryWithIndex {
 	        		tempResults.get(i).addAll(invertedIndices.get(i).get(ats1[i]));
 				} else {
 	        	
-					SingleRepoSearchThreadV2 t = new SingleRepoSearchThreadV2("Thread " + i, threadCounter2, ats1[i], ats2[i], hIndices.get(i), aIndices.get(i), tempResults.get(i), invertedIndices.get(i));
+					SingleRepoSearchThreadV2 t = new SingleRepoSearchThreadV2("Thread " + i, threadCounter2, ats1[i], ats2[i], hIndices.get(i), aIndices.get(i), tempResults.get(i));
 
 					t.start();
 				}

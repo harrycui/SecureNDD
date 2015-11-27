@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 import cloud.RawRecord;
-import local.Document;
+import local.DataItem;
 import local.NameFingerprintPair;
 
 public class FileTool {
@@ -43,7 +43,7 @@ public class FileTool {
 	 *            boolean: true - binary format; false - plain format
 	 */
 	public static void writeFingerprint2File(String outPath, String fileName,
-			List<Document> docs, boolean type) {
+			List<DataItem> docs, boolean type) {
 
 		String filePath = outPath + fileName;
 
@@ -71,7 +71,7 @@ public class FileTool {
 
 					for (int i = 0; i < docs.size(); i++) {
 
-						Document tmp = docs.get(i);
+						DataItem tmp = docs.get(i);
 
 						dos.writeInt(tmp.getId());
 						dos.write(tmp.getFingerprint().getRaw());
@@ -104,7 +104,7 @@ public class FileTool {
 
 					for (int i = 0; i < docs.size(); i++) {
 
-						Document tmp = docs.get(i);
+						DataItem tmp = docs.get(i);
 
 						bw.write(tmp.getId() + "::" + tmp.getName() + "::"
 								+ tmp.getFingerprint().getValue() + "\n");

@@ -9,7 +9,7 @@ import java.util.Map;
 
 import secure.PRF;
 import secure.PaillierPublicKey;
-import base.MyCounter;
+import util.MyCounter;
 import base.Parameters;
 
 public class Repository2 {
@@ -101,11 +101,7 @@ public class Repository2 {
 		// true = cached, false = miss
 		boolean[] flags = new boolean[this.params.lshL];
 		
-		int numOfSearch = this.params.lshL;
-		
 		Map<Integer, Integer> searchResult = new HashMap<Integer, Integer>();
-		
-		//long numOfTest = 0L;
 		
 		long innerStTime;
 		
@@ -113,7 +109,6 @@ public class Repository2 {
 			
 			System.out.println("This user has not been authorized in repository (id = " + this.id + ")!");
 			
-			//return 0;
 		} else {
 			
 			while (true) {
@@ -121,8 +116,6 @@ public class Repository2 {
 				innerStTime = System.currentTimeMillis();
 				
 				if (innerStTime >= stTime) {
-					
-					//innerStTime = System.currentTimeMillis();
 					
 					System.out.println(innerStTime);
 					break;
@@ -141,10 +134,6 @@ public class Repository2 {
 					adjustedQuery[j] = params.pairing.pairing(tArray.get(j), delta)
 					.toString();
 					
-					/*if (cachedIndex.get(i).containsKey(adjustedQuery[i])) {
-						flags[i] = true;
-						numOfSearch--;
-					}*/
 				}
 			}
 			
@@ -158,10 +147,6 @@ public class Repository2 {
 				adjustedQuery[i] = params.pairing.pairing(tArray.get(i), delta)
 				.toString();
 				
-				/*if (cachedIndex.get(i).containsKey(adjustedQuery[i])) {
-					flags[i] = true;
-					numOfSearch--;
-				}*/
 			}
 			
 			
@@ -200,7 +185,7 @@ public class Repository2 {
 	    			//System.out.println(sts.size());
 				}
 	        	
-	        	numOfTest.add1();
+	        	numOfTest.addOne();
 	        	ii++;
 	        	
 	        	if (System.currentTimeMillis() - innerStTime > 60000) {

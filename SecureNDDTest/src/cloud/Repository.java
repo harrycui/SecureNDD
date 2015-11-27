@@ -29,8 +29,6 @@ public class Repository {
 	
 	private Map<Integer, Element> deltas;
 	
-	//private Map<Integer, NameFingerprintPair> rawRecord;
-	
 	private Map<Integer, EncryptedFingerprint> encryptedFingerprints;
 	
 	// added on 16/7/2015
@@ -138,7 +136,6 @@ public class Repository {
 					tempResults.add(new ArrayList<>());
 				}
 			}
-	        
 	        
 	        if (numOfSearch > 0) {
 				

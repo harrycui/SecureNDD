@@ -1,9 +1,10 @@
-package base;
+package util;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import base.Distance;
 import cloud.RawRecord;
 
 public class MyAnalysis {
